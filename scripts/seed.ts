@@ -3,8 +3,8 @@
  * Run: npx tsx scripts/seed.ts
  */
 
-const SUPABASE_URL = 'https://zerflqzguughbbnphwfw.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplcmZscXpndXVnaGJibnBod2Z3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTMwNzIyNywiZXhwIjoyMDg2ODgzMjI3fQ.m7MD1jg3mYI9z8UYMUIFwq1WIGGlIfKVKpQO3sbaNeI';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 import { createClient } from '@supabase/supabase-js';
 
