@@ -1,8 +1,8 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import ClientsTableWrapper from '@/components/admin/ClientsTableWrapper';
 
 async function getClients() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServiceRoleClient();
 
   const { data: clients } = await supabase
     .from('profiles')

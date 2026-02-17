@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
@@ -26,7 +26,7 @@ function scoreColor(score: number | null) {
 }
 
 async function getCalls() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServiceRoleClient();
 
   const { data } = await supabase
     .from('calls')

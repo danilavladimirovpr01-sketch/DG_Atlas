@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { Badge } from '@/components/ui/badge';
 
 function scoreColor(score: number) {
@@ -8,7 +8,7 @@ function scoreColor(score: number) {
 }
 
 async function getManagers() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServiceRoleClient();
 
   const { data: managers } = await supabase
     .from('profiles')

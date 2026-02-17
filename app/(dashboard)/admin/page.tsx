@@ -1,8 +1,8 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { Users, UserCog, Phone, Star } from 'lucide-react';
 
 async function getStats() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServiceRoleClient();
 
   const [clients, managers, calls, nps] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'client'),
