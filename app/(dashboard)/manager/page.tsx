@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Upload, FileAudio, Loader2, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';

@@ -1,27 +1,8 @@
 'use client';
 
-import { useEffect, useState, createContext, useContext } from 'react';
+import { useEffect, useState } from 'react';
 import type { Project, Profile } from '@/types';
-
-interface TmaContextType {
-  profile: Profile | null;
-  project: Project | null;
-  telegramUser: { id: string; firstName: string; lastName: string; username: string } | null;
-  isLoading: boolean;
-  setProfile: (p: Profile | null) => void;
-  setProject: (p: Project | null) => void;
-}
-
-const TmaContext = createContext<TmaContextType>({
-  profile: null,
-  project: null,
-  telegramUser: null,
-  isLoading: true,
-  setProfile: () => {},
-  setProject: () => {},
-});
-
-export const useTma = () => useContext(TmaContext);
+import { TmaContext, type TmaContextType } from '@/lib/tma-context';
 
 export default function TmaLayout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -31,6 +12,7 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Expand TMA to full screen
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tg = (window as any).Telegram?.WebApp;
     if (tg) {
       tg.expand();

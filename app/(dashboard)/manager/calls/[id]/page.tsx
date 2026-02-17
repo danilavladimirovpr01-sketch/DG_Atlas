@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import Link from 'next/link';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTma } from '../layout';
+import { useTma } from '@/lib/tma-context';
 import StagesTimeline from '@/components/tma/StagesTimeline';
 
 export default function StagesPage() {

@@ -72,7 +72,7 @@ export default async function AdminCallsPage() {
                 </td>
               </tr>
             ) : (
-              calls.map((call: any) => (
+              calls.map((call: { id: string; created_at: string; profiles?: { full_name: string }; analysis_status: string; score: number | null; ai_summary: string | null }) => (
                 <tr key={call.id} className="hover:bg-zinc-800/50">
                   <td className="px-5 py-3 text-zinc-300 text-sm">
                     <Link

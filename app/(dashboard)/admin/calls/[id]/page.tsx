@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 

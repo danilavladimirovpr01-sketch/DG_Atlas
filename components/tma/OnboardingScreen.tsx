@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTma } from '@/app/tma/layout';
+import { useTma } from '@/lib/tma-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 

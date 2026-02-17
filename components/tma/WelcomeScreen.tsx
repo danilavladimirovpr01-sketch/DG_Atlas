@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTma } from '@/app/tma/layout';
+import { useTma } from '@/lib/tma-context';
 import { STAGES } from '@/lib/constants/stages';
 import { ArrowRight } from 'lucide-react';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTma } from '@/app/tma/layout';
+import { useTma } from '@/lib/tma-context';
 import { STAGES } from '@/lib/constants/stages';
 import StageCard from './StageCard';
 import NpsWidget from './NpsWidget';
@@ -12,7 +12,7 @@ import Link from 'next/link';
 export default function StagesTimeline() {
   const { profile, project } = useTma();
   const [photos, setPhotos] = useState<StagePhoto[]>([]);
-  const [npsResponses, setNpsResponses] = useState<NpsResponse[]>([]);
+  const [, setNpsResponses] = useState<NpsResponse[]>([]);
   const [npsStage, setNpsStage] = useState<number | null>(null);
   const [submittedStages, setSubmittedStages] = useState<Set<number>>(new Set());
 

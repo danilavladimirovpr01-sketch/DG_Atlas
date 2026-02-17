@@ -113,7 +113,7 @@ export default async function AdminDashboard() {
               Пока нет звонков
             </div>
           ) : (
-            stats.recentCalls.map((call: any) => (
+            stats.recentCalls.map((call: { id: string; created_at: string; profiles?: { full_name: string }; score: number | null; analysis_status: string }) => (
               <div key={call.id} className="px-5 py-3 flex items-center justify-between">
                 <div>
                   <p className="text-white text-sm">

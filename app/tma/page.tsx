@@ -1,6 +1,6 @@
 'use client';
 
-import { useTma } from './layout';
+import { useTma } from '@/lib/tma-context';
 import WelcomeScreen from '@/components/tma/WelcomeScreen';
 import OnboardingScreen from '@/components/tma/OnboardingScreen';
 
