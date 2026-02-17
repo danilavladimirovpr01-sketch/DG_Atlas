@@ -32,7 +32,16 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingProfile && existingProfile.phone) {
-      // User already onboarded — return session info
+      // Sync name from Telegram
+      const tgName = [telegramUser.firstName, telegramUser.lastName].filter(Boolean).join(' ');
+      if (tgName && existingProfile.full_name !== tgName) {
+        await supabase
+          .from('profiles')
+          .update({ full_name: tgName })
+          .eq('id', existingProfile.id);
+        existingProfile.full_name = tgName;
+      }
+
       // Check if they have a project
       const { data: project } = await supabase
         .from('projects')
