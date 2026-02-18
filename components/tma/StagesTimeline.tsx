@@ -44,7 +44,7 @@ export default function StagesTimeline() {
     setSubmittedStages((prev) => new Set(Array.from(prev).concat(stage)));
   }
 
-  const currentStage = project?.current_stage || 1;
+  const currentStage = project?.current_stage ?? 0;
 
   return (
     <div className="min-h-screen bg-black px-4 py-6">
@@ -59,7 +59,7 @@ export default function StagesTimeline() {
         <div>
           <h1 className="text-xl font-bold text-white">Прогресс строительства</h1>
           <p className="text-zinc-500 text-sm">
-            Этап {currentStage} из 14 — {STAGES[currentStage - 1]?.title}
+            Этап {currentStage + 1} из {STAGES.length} — {STAGES[currentStage]?.title}
           </p>
         </div>
       </div>

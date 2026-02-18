@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       await supabase.from('projects').insert({
         client_id: profileId,
         title: 'Мой проект',
-        current_stage: 1,
+        current_stage: 0,
         status: 'active',
       });
     }

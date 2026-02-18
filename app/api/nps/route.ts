@@ -3,9 +3,9 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { clientId, projectId, stage, score, comment } = await request.json();
+    const { clientId, projectId, stage, score, employeeId, answers, comment } = await request.json();
 
-    if (!clientId || !projectId || !stage || score === undefined) {
+    if (!clientId || !projectId || stage === undefined || score === undefined) {
       return NextResponse.json(
         { error: 'clientId, projectId, stage, and score are required' },
         { status: 400 }
@@ -29,6 +29,8 @@ export async function POST(request: NextRequest) {
           project_id: projectId,
           stage,
           score,
+          employee_id: employeeId || null,
+          answers: answers || {},
           comment: comment || null,
         },
         {

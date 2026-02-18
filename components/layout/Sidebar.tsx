@@ -8,6 +8,7 @@ import {
   UserCog,
   Phone,
   ClipboardCheck,
+  Star,
   Upload,
 } from 'lucide-react';
 import type { Role } from '@/types';
@@ -22,6 +23,7 @@ const adminLinks = [
   { href: '/admin/managers', label: 'Менеджеры', icon: UserCog },
   { href: '/admin/calls', label: 'Звонки', icon: Phone },
   { href: '/admin/checklist', label: 'Чеклист', icon: ClipboardCheck },
+  { href: '/admin/nps', label: 'NPS', icon: Star },
 ];
 
 const managerLinks = [

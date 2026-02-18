@@ -4,6 +4,8 @@ export type ProjectStatus = 'active' | 'completed' | 'paused';
 
 export type AnalysisStatus = 'pending' | 'transcribing' | 'analyzing' | 'done' | 'error';
 
+export type EmployeePosition = 'manager' | 'architect' | 'foreman' | 'project_manager';
+
 export interface Profile {
   id: string;
   full_name: string;
@@ -17,7 +19,7 @@ export interface Project {
   id: string;
   client_id: string;
   manager_id: string | null;
-  current_stage: number; // 1-14
+  current_stage: number; // 0-14
   status: ProjectStatus;
   cover_photo_url: string | null;
   title: string;
@@ -33,12 +35,22 @@ export interface StagePhoto {
   created_at: string;
 }
 
+export interface Employee {
+  id: string;
+  full_name: string;
+  position: EmployeePosition;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface NpsResponse {
   id: string;
   client_id: string;
   project_id: string;
-  stage: number;
+  employee_id: string | null;
+  stage: number; // 0-14
   score: number; // 0-10
+  answers: Record<string, number | string>;
   comment: string | null;
   created_at: string;
 }
