@@ -57,3 +57,6 @@ UPDATE public.nps_responses SET stage = stage - 1 WHERE stage > 0;
 ALTER TABLE public.nps_responses
   ADD COLUMN IF NOT EXISTS employee_id uuid references public.employees(id) on delete set null,
   ADD COLUMN IF NOT EXISTS answers jsonb DEFAULT '{}';
+
+-- 5. Fix default current_stage: 1 → 0
+ALTER TABLE public.projects ALTER COLUMN current_stage SET DEFAULT 0;

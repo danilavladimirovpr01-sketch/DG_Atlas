@@ -8,9 +8,9 @@ import { ArrowRight } from 'lucide-react';
 export default function WelcomeScreen() {
   const { profile, project } = useTma();
 
-  const currentStage = project?.current_stage || 1;
-  const stageInfo = STAGES[currentStage - 1];
-  const progress = Math.round((currentStage / 14) * 100);
+  const currentStage = project?.current_stage ?? 0;
+  const stageInfo = STAGES[currentStage];
+  const progress = Math.round(((currentStage + 1) / STAGES.length) * 100);
   const firstName = profile?.full_name?.split(' ')[0] || 'Клиент';
 
   return (
@@ -45,7 +45,7 @@ export default function WelcomeScreen() {
         <div className="space-y-3">
           <div className="flex justify-between items-center text-sm">
             <span className="text-zinc-400">
-              Этап {currentStage} из 14
+              Этап {currentStage + 1} из {STAGES.length}
             </span>
             <span className="text-white font-medium">
               {progress}%
