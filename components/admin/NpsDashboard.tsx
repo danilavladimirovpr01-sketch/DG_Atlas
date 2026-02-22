@@ -5,6 +5,7 @@ import { STAGES } from '@/lib/constants/stages';
 import { POSITION_LABELS } from '@/lib/constants/nps-questions';
 import type { EmployeePosition } from '@/types';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { NPS_QUESTIONS } from '@/lib/constants/nps-questions';
 
 interface NpsResponseItem {
   id: string;
@@ -73,16 +74,24 @@ function formatDate(dateStr: string) {
   });
 }
 
+function getQuestionLabel(stage: number, key: string): string {
+  const config = NPS_QUESTIONS[stage];
+  if (!config) return key;
+  const q = config.questions.find((q) => q.key === key);
+  return q?.label || key;
+}
+
 function ResponseCard({ r }: { r: NpsResponseItem }) {
   const [expanded, setExpanded] = useState(false);
   const answerEntries = Object.entries(r.answers || {}).filter(
     ([, v]) => v !== null && v !== undefined && v !== ''
   );
+  const hasDetails = answerEntries.length > 0;
 
   return (
     <div className="px-5 py-3 hover:bg-zinc-800/50 transition-colors">
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => hasDetails && setExpanded(!expanded)}
         className="w-full text-left"
       >
         <div className="flex items-center justify-between">
@@ -102,7 +111,7 @@ function ResponseCard({ r }: { r: NpsResponseItem }) {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-zinc-600 text-xs">{formatDate(r.createdAt)}</span>
-            {answerEntries.length > 0 && (
+            {hasDetails && (
               expanded
                 ? <ChevronDown className="w-4 h-4 text-zinc-500" />
                 : <ChevronRight className="w-4 h-4 text-zinc-500" />
@@ -114,14 +123,26 @@ function ResponseCard({ r }: { r: NpsResponseItem }) {
         )}
       </button>
 
-      {expanded && answerEntries.length > 0 && (
-        <div className="ml-11 mt-2 space-y-1 border-l-2 border-zinc-800 pl-3">
+      {expanded && (
+        <div className="ml-11 mt-3 space-y-2 border-l-2 border-zinc-700 pl-4">
           {answerEntries.map(([key, value]) => (
-            <div key={key} className="flex items-start gap-2 text-xs">
-              <span className="text-zinc-500 shrink-0">{key}:</span>
-              <span className={typeof value === 'number' ? scoreColor(value) + ' font-medium' : 'text-zinc-400'}>
-                {typeof value === 'number' ? `${value}/10` : value}
-              </span>
+            <div key={key}>
+              <p className="text-zinc-400 text-xs leading-relaxed">
+                {getQuestionLabel(r.stage, key)}
+              </p>
+              {typeof value === 'number' ? (
+                <div className="flex items-center gap-2 mt-0.5">
+                  <div className="h-1.5 bg-zinc-800 rounded-full flex-1 max-w-48 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${value >= 8 ? 'bg-green-500' : value >= 6 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      style={{ width: `${(value / 10) * 100}%` }}
+                    />
+                  </div>
+                  <span className={`text-sm font-bold ${scoreColor(value)}`}>{value}</span>
+                </div>
+              ) : (
+                <p className="text-zinc-300 text-sm mt-0.5">&laquo;{value}&raquo;</p>
+              )}
             </div>
           ))}
         </div>
