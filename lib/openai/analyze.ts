@@ -1,8 +1,9 @@
 import OpenAI from 'openai';
 import type { ChecklistItem } from '@/types';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
 });
 
 export interface CriterionResult {
@@ -25,8 +26,8 @@ export async function analyzeCall(
     .map((item, i) => `${i + 1}. [${item.id}] ${item.category} — ${item.criterion}`)
     .join('\n');
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+  const response = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
     temperature: 0.2,
     response_format: { type: 'json_object' },
     messages: [
@@ -58,7 +59,7 @@ export async function analyzeCall(
 
   const content = response.choices[0].message.content;
   if (!content) {
-    throw new Error('Empty response from GPT-4o');
+    throw new Error('Empty response from LLM');
   }
 
   return JSON.parse(content) as AnalysisResult;
