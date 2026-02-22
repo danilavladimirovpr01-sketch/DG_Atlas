@@ -23,12 +23,14 @@ export default function StagesTimeline() {
       try {
         const res = await fetch(`/api/projects/${project!.id}`);
         const data = await res.json();
-        setPhotos(data.stage_photos || []);
-        setNpsResponses(data.nps_responses || []);
+        const stagePhotos = Array.isArray(data.stage_photos) ? data.stage_photos : [];
+        const npsData = Array.isArray(data.nps_responses) ? data.nps_responses : [];
+        setPhotos(stagePhotos);
+        setNpsResponses(npsData);
 
         // Mark already submitted NPS stages
         const submitted = new Set<number>();
-        (data.nps_responses || []).forEach((nps: NpsResponse) => {
+        npsData.forEach((nps: NpsResponse) => {
           submitted.add(nps.stage);
         });
         setSubmittedStages(submitted);

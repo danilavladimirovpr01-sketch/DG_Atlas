@@ -39,7 +39,7 @@ export default function NpsWidget({
       try {
         const res = await fetch(`/api/employees?position=${config?.employeePosition || 'manager'}`);
         const data = await res.json();
-        setEmployees(data);
+        setEmployees(Array.isArray(data) ? data : []);
       } catch {
         // fallback
       } finally {
