@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -11,7 +12,7 @@ interface CriterionScore {
   checklist_items: {
     category: string;
     criterion: string;
-  };
+  } | null;
 }
 
 interface CallDetail {
@@ -22,7 +23,7 @@ interface CallDetail {
   analysis_status: string;
   ai_summary: string | null;
   created_at: string;
-  call_criterion_scores: CriterionScore[];
+  call_criterion_scores: CriterionScore[] | null;
 }
 
 function scoreColor(score: number | null) {
@@ -39,12 +40,8 @@ function scoreBg(score: number | null) {
   return 'bg-red-950 border-red-900';
 }
 
-export default function AdminCallDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
+export default function AdminCallDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const [call, setCall] = useState<CallDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +56,7 @@ export default function AdminCallDetailPage({
         setLoading(false);
       }
     }
-    loadCall();
+    if (id) loadCall();
   }, [id]);
 
   if (loading) {
@@ -70,8 +67,12 @@ export default function AdminCallDetailPage({
     return <div className="py-20 text-center text-zinc-500">Звонок не найден</div>;
   }
 
+  const scores = Array.isArray(call.call_criterion_scores)
+    ? call.call_criterion_scores
+    : [];
+
   const grouped: Record<string, CriterionScore[]> = {};
-  (call.call_criterion_scores || []).forEach((cs) => {
+  scores.forEach((cs) => {
     const cat = cs.checklist_items?.category || 'Другое';
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(cs);
@@ -110,12 +111,12 @@ export default function AdminCallDetailPage({
       {Object.keys(grouped).length > 0 && (
         <div className="space-y-4">
           <h2 className="text-lg font-medium text-white">Чеклист</h2>
-          {Object.entries(grouped).map(([category, scores]) => (
+          {Object.entries(grouped).map(([category, catScores]) => (
             <div key={category} className="bg-zinc-900 rounded-xl p-4 space-y-3">
               <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
                 {category}
               </h3>
-              {scores.map((cs) => (
+              {catScores.map((cs) => (
                 <div key={cs.id} className="flex items-start gap-3">
                   {cs.passed ? (
                     <CheckCircle className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
@@ -123,7 +124,7 @@ export default function AdminCallDetailPage({
                     <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                   )}
                   <div>
-                    <p className="text-white text-sm">{cs.checklist_items?.criterion}</p>
+                    <p className="text-white text-sm">{cs.checklist_items?.criterion || 'Критерий'}</p>
                     {cs.ai_comment && (
                       <p className="text-zinc-500 text-xs mt-0.5">{cs.ai_comment}</p>
                     )}

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
@@ -12,7 +13,7 @@ interface CriterionScore {
   checklist_items: {
     category: string;
     criterion: string;
-  };
+  } | null;
 }
 
 interface CallDetail {
@@ -23,7 +24,7 @@ interface CallDetail {
   analysis_status: string;
   ai_summary: string | null;
   created_at: string;
-  call_criterion_scores: CriterionScore[];
+  call_criterion_scores: CriterionScore[] | null;
 }
 
 function scoreColor(score: number | null) {
@@ -40,12 +41,8 @@ function scoreBg(score: number | null) {
   return 'bg-red-950 border-red-900';
 }
 
-export default function CallDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
+export default function CallDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const [call, setCall] = useState<CallDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [reanalyzing, setReanalyzing] = useState(false);
@@ -63,7 +60,7 @@ export default function CallDetailPage({
         setLoading(false);
       }
     }
-    loadCall();
+    if (id) loadCall();
   }, [id]);
 
   async function handleReanalyze() {
@@ -95,8 +92,12 @@ export default function CallDetailPage({
   }
 
   // Group criteria by category
+  const scores = Array.isArray(call.call_criterion_scores)
+    ? call.call_criterion_scores
+    : [];
+
   const grouped: Record<string, CriterionScore[]> = {};
-  (call.call_criterion_scores || []).forEach((cs) => {
+  scores.forEach((cs) => {
     const cat = cs.checklist_items?.category || 'Другое';
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(cs);
