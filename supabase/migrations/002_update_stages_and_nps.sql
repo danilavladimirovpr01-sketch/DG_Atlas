@@ -21,24 +21,28 @@ create policy "Anyone can read employees"
   on public.employees for select
   using (true);
 
--- 2. Seed employees
+-- 2. Seed employees (4 per role)
 INSERT INTO public.employees (full_name, position) VALUES
-  -- Менеджеры
+  -- Менеджеры (этапы 0-Мечта, 1-Участок, 2-Компания, 4-Смета, 14-Сервис)
   ('Алексей Петров', 'manager'),
   ('Дмитрий Козлов', 'manager'),
   ('Елена Смирнова', 'manager'),
-  -- Архитекторы
+  ('Виктория Орлова', 'manager'),
+  -- Архитекторы (этапы 3-Проектирование, 9-Дизайн-проект)
   ('Андрей Волков', 'architect'),
   ('Мария Белова', 'architect'),
   ('Сергей Новиков', 'architect'),
-  -- Прорабы
+  ('Анна Климова', 'architect'),
+  -- Прорабы (этапы 5-Фундамент, 6-Крыша, 8-Фасад, 10-Отделка, 11-Коммуникации, 12-Ландшафт)
   ('Иван Сидоров', 'foreman'),
   ('Николай Кузнецов', 'foreman'),
   ('Павел Морозов', 'foreman'),
-  -- Менеджеры проекта
+  ('Максим Громов', 'foreman'),
+  -- Менеджеры проекта (этапы 7-Тёплый контур, 13-Заезд)
   ('Ольга Васильева', 'project_manager'),
   ('Артём Лебедев', 'project_manager'),
-  ('Татьяна Фёдорова', 'project_manager');
+  ('Татьяна Фёдорова', 'project_manager'),
+  ('Дарья Соколова', 'project_manager');
 
 -- 3. Update stage constraints: 1-14 → 0-14
 ALTER TABLE public.projects DROP CONSTRAINT IF EXISTS projects_current_stage_check;
