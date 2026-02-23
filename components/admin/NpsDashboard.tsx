@@ -6,7 +6,7 @@ import { POSITION_LABELS, NPS_QUESTIONS } from '@/lib/constants/nps-questions';
 import type { EmployeePosition } from '@/types';
 import {
   TrendingUp, TrendingDown, Users, AlertTriangle, Star, BarChart3,
-  Activity, DollarSign, MessageCircleWarning,
+  Activity, DollarSign, MessageCircleWarning, Info,
   ChevronDown, ChevronRight, Clock, CheckCircle2, AlertCircle,
   Zap,
 } from 'lucide-react';
@@ -216,11 +216,69 @@ function calcNps(responses: NpsResponseItem[]) {
 // ============================================================================
 
 // ============================================================================
+// INFO TOOLTIP
+// ============================================================================
+
+function InfoTooltip({ title, text }: { title: string; text: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative inline-flex">
+      <button
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={() => setOpen(!open)}
+        className="w-4 h-4 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors cursor-help"
+        aria-label="Подробнее"
+      >
+        <Info className="w-3 h-3 text-zinc-500" />
+      </button>
+      {open && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 pointer-events-none">
+          <div className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl text-left">
+            <p className="text-zinc-200 text-xs font-semibold mb-1">{title}</p>
+            <p className="text-zinc-400 text-xs leading-relaxed whitespace-pre-line">{text}</p>
+          </div>
+          <div className="w-2 h-2 bg-zinc-800 border-r border-b border-zinc-700 rotate-45 mx-auto -mt-1" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionInfo({ title, text }: { title: string; text: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative inline-flex">
+      <button
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={() => setOpen(!open)}
+        className="w-5 h-5 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors cursor-help ml-1.5"
+        aria-label="Подробнее"
+      >
+        <Info className="w-3.5 h-3.5 text-zinc-500" />
+      </button>
+      {open && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 pointer-events-none">
+          <div className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl text-left">
+            <p className="text-zinc-200 text-xs font-semibold mb-1">{title}</p>
+            <p className="text-zinc-400 text-xs leading-relaxed whitespace-pre-line">{text}</p>
+          </div>
+          <div className="w-2 h-2 bg-zinc-800 border-r border-b border-zinc-700 rotate-45 mx-auto -mt-1" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // KPI CARD
 // ============================================================================
 
 function KpiCard({
-  icon: Icon, label, value, sub, trend, colorClass, bgClass,
+  icon: Icon, label, value, sub, trend, colorClass, bgClass, info,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -229,12 +287,16 @@ function KpiCard({
   trend?: { value: number; label: string } | null;
   colorClass: string;
   bgClass: string;
+  info?: { title: string; text: string };
 }) {
   return (
     <div className={`rounded-2xl p-5 border bg-gradient-to-br ${bgClass} relative overflow-hidden`}>
       <div className="absolute top-0 right-0 w-24 h-24 bg-white/[0.02] rounded-full -translate-y-8 translate-x-8" />
       <div className="flex items-center justify-between mb-3">
-        <p className="text-zinc-400 text-sm font-medium">{label}</p>
+        <div className="flex items-center gap-1">
+          <p className="text-zinc-400 text-sm font-medium">{label}</p>
+          {info && <InfoTooltip title={info.title} text={info.text} />}
+        </div>
         <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center backdrop-blur-sm">
           <Icon className="w-4.5 h-4.5 text-zinc-400" />
         </div>
@@ -938,6 +1000,10 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
           trend={npsTrend}
           colorClass={npsColor(kpi.npsScore)}
           bgClass={npsBgGradient(kpi.npsScore)}
+          info={{
+            title: 'Net Promoter Score (NPS)',
+            text: 'Главный показатель лояльности клиентов.\n\nКак считается: (% промоутеров − % критиков) × 100\n• Промоутеры (9-10) — рекомендуют вас\n• Нейтральные (7-8) — довольны, но не фанаты\n• Критики (0-6) — недовольны, могут уйти\n\nШкала: от −100 до +100\n• > 50 — отлично\n• 0–50 — хорошо\n• < 0 — требует внимания\n\nВлияет на: повторные заказы, рекомендации, репутацию компании.',
+          }}
         />
         <KpiCard
           icon={Activity}
@@ -946,6 +1012,10 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
           sub={`${kpi.total} из ${showDemo ? totalClients + 16 : totalClients} клиентов`}
           colorClass={responseRate >= 60 ? 'text-green-400' : responseRate >= 30 ? 'text-yellow-400' : 'text-red-400'}
           bgClass="from-zinc-900 to-zinc-900 border-zinc-800"
+          info={{
+            title: 'Response Rate (Процент отклика)',
+            text: 'Доля клиентов, которые прошли NPS-опрос.\n\nКак считается: (кол-во ответивших / всего клиентов) × 100%\n\n• > 60% — отличный отклик, данные надёжные\n• 30–60% — нормально, но есть куда расти\n• < 30% — мало данных, выводы могут быть неточными\n\nВлияет на: достоверность NPS. При низком отклике NPS может не отражать реальную картину. Чем больше ответов — тем точнее аналитика.',
+          }}
         />
         <KpiCard
           icon={Star}
@@ -954,6 +1024,10 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
           sub="из 10"
           colorClass={scoreColor(kpi.avgScore)}
           bgClass={kpi.avgScore >= 8 ? 'from-green-500/10 to-green-500/5 border-green-500/20' : kpi.avgScore >= 6 ? 'from-yellow-500/10 to-yellow-500/5 border-yellow-500/20' : 'from-red-500/10 to-red-500/5 border-red-500/20'}
+          info={{
+            title: 'Средняя оценка',
+            text: 'Среднее арифметическое всех оценок клиентов по шкале от 0 до 10.\n\nКак считается: сумма всех оценок / количество ответов\n\n• 8–10 — клиенты очень довольны\n• 6–8 — есть зоны для улучшения\n• < 6 — серьёзные проблемы с качеством\n\nОтличие от NPS: средняя оценка показывает общий уровень удовлетворённости, а NPS — баланс между фанатами и критиками. Средняя может быть 7.5, но при этом NPS отрицательный, если много критиков.',
+          }}
         />
         <KpiCard
           icon={DollarSign}
@@ -962,6 +1036,10 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
           sub={`${new Set(filtered.filter((r) => r.score <= 6).map((r) => r.clientId || r.clientName)).size} детракторов`}
           colorClass="text-red-400"
           bgClass="from-red-500/10 to-red-500/5 border-red-500/20"
+          info={{
+            title: 'Выручка под угрозой',
+            text: 'Сумма контрактов клиентов-критиков (оценка 0-6), которые могут уйти или оставить негативный отзыв.\n\nКак считается: количество уникальных клиентов-критиков × средняя стоимость проекта\n\nПочему важно: критики в 3 раза чаще отказываются от допродаж и рекомендаций. Конвертация всего 5% критиков в промоутеров может вернуть миллионы.\n\nЧто делать: связаться с каждым критиком в течение 24 часов, выяснить проблему и предложить решение.',
+          }}
         />
         <KpiCard
           icon={AlertTriangle}
@@ -970,6 +1048,10 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
           sub={worstStage ? `Ср. ${worstStage.avg} из 10` : null}
           colorClass={worstStage ? 'text-red-400 text-lg' : 'text-zinc-500'}
           bgClass="from-zinc-900 to-zinc-900 border-zinc-800"
+          info={{
+            title: 'Проблемный этап',
+            text: 'Этап строительства с самой низкой средней оценкой от клиентов.\n\nКак определяется: сравниваются средние оценки по всем этапам, выбирается этап с наименьшей.\n\nПочему важно: показывает, где в процессе строительства клиенты чаще всего недовольны. Это «слабое звено» в цепочке.\n\nЧто делать: проанализировать комментарии критиков на этом этапе, проверить бригаду/прораба, улучшить процесс или коммуникацию с клиентом.',
+          }}
         />
       </div>
 
@@ -979,7 +1061,7 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
           {/* Row 1: Gauge + Distribution + Histogram */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
-              <h3 className="text-zinc-400 text-sm font-medium mb-2">NPS Gauge</h3>
+              <h3 className="text-zinc-400 text-sm font-medium mb-2 flex items-center">NPS Gauge<SectionInfo title="NPS Gauge (Спидометр)" text="Визуальное отображение текущего NPS Score на шкале от −100 до +100.\n\nЗелёная зона (50+): клиенты — ваши фанаты.\nЖёлтая зона (0-50): есть лояльность, но можно лучше.\nКрасная зона (<0): критиков больше, чем промоутеров — срочно работать над качеством.\n\nПроцент промоутеров, нейтральных и критиков показан под спидометром." /></h3>
               <NpsGauge score={kpi.npsScore} />
               <div className="flex justify-center gap-4 mt-3">
                 <div className="text-center">
@@ -998,12 +1080,12 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
             </div>
 
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
-              <h3 className="text-zinc-400 text-sm font-medium mb-2">Распределение оценок</h3>
+              <h3 className="text-zinc-400 text-sm font-medium mb-2 flex items-center">Распределение оценок<SectionInfo title="Распределение по категориям" text="Круговая диаграмма показывает соотношение трёх групп клиентов:\n\n🟢 Промоутеры (9-10) — лояльные клиенты, которые рекомендуют вас знакомым. Каждый промоутер приводит в среднем 2-3 новых клиента.\n\n🟡 Нейтральные (7-8) — довольны, но не привязаны. Легко могут уйти к конкуренту.\n\n🔴 Критики (0-6) — недовольные клиенты. Каждый критик рассказывает о негативном опыте 9-15 людям.\n\nЦель: максимизировать зелёный сегмент, минимизировать красный." /></h3>
               <DistributionDonut promoters={kpi.promoters} passives={kpi.passives} detractors={kpi.detractors} />
             </div>
 
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
-              <h3 className="text-zinc-400 text-sm font-medium mb-2">Гистограмма (0–10)</h3>
+              <h3 className="text-zinc-400 text-sm font-medium mb-2 flex items-center">Гистограмма (0–10)<SectionInfo title="Детальное распределение оценок" text="Показывает сколько клиентов поставили каждую конкретную оценку от 0 до 10.\n\nЗачем: NPS группирует оценки в 3 категории, а гистограмма показывает точную картину. Например:\n• Много оценок «6» — клиенты на грани, их можно перевести в нейтральных\n• Много оценок «8» — одно улучшение может сделать их промоутерами\n• Оценки «0-3» — серьёзные проблемы, нужно срочно разбираться\n\nЦвета: зелёный (9-10), жёлтый (7-8), красный (0-6)" /></h3>
               <ScoreHistogram responses={filtered} />
             </div>
           </div>
@@ -1014,6 +1096,7 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
               <h3 className="text-white font-medium flex items-center gap-2">
                 <Activity className="w-4 h-4 text-cyan-400" />
                 NPS Тренд
+                <SectionInfo title="NPS Тренд по неделям" text="Два показателя на одном графике:\n\n🔵 Голубая линия (левая ось) — NPS Score по неделям (-100 до +100). Показывает динамику лояльности во времени.\n\n🟣 Фиолетовая пунктирная (правая ось) — средняя оценка (0-10). Помогает сравнить NPS с общей удовлетворённостью.\n\nЗачем: отслеживать, растёт или падает лояльность. Резкое падение NPS = сигнал к немедленным действиям. Рост = ваши улучшения работают.\n\nСовет: сравнивайте с событиями — смена бригады, новый этап, сезонность." />
               </h3>
               <div className="flex items-center gap-3 text-xs text-zinc-500">
                 <span>Левая ось: NPS (−100…+100)</span>
@@ -1029,6 +1112,7 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
               <h3 className="text-white font-medium flex items-center gap-2">
                 <MessageCircleWarning className="w-4 h-4 text-red-400" />
                 Критики — Closed Loop
+                <SectionInfo title="Закрытие обратной связи (Closed Loop)" text="Список клиентов, поставивших оценку 0-6 (критики), с отслеживанием статуса работы по каждому.\n\nСтатусы:\n• Новый — обратная связь получена, ещё не обработана\n• В работе — менеджер связался с клиентом, решает проблему\n• Решён — проблема устранена, клиент доволен\n\nЗачем: компании, которые реагируют на критиков в течение 24 часов, повышают NPS на 6 пунктов. Конвертация 5% критиков в промоутеров приносит миллионы.\n\nПравило: каждый критик должен получить ответ в течение 24 часов." />
               </h3>
               <span className="text-zinc-500 text-xs">{filtered.filter((r) => r.score <= 6).length} критиков</span>
             </div>
@@ -1045,6 +1129,7 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
               <h3 className="text-white font-medium flex items-center gap-2 mb-4">
                 <BarChart3 className="w-4 h-4 text-zinc-400" />
                 Распределение по этапам
+                <SectionInfo title="Stacked Bar — этапы строительства" text="Горизонтальная диаграмма показывает по каждому этапу строительства, сколько клиентов попали в каждую категорию:\n\n🟢 Зелёный — промоутеры (9-10)\n🟡 Жёлтый — нейтральные (7-8)\n🔴 Красный — критики (0-6)\n\nЗачем: средняя оценка скрывает проблемы. Этап со средней 7.5 может иметь 40% критиков — это видно только на stacked bar.\n\nЧто искать: этапы с большой красной полосой — приоритет для улучшений." />
               </h3>
               <StagesStackedChart responses={filtered} />
               <div className="flex justify-center gap-6 mt-3">
@@ -1064,7 +1149,7 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
             </div>
 
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
-              <h3 className="text-white font-medium mb-4">Тепловая карта: Этапы × Сотрудники</h3>
+              <h3 className="text-white font-medium mb-4 flex items-center">Тепловая карта: Этапы × Сотрудники<SectionInfo title="Heatmap (Тепловая карта)" text="Матрица, где строки — сотрудники, столбцы — этапы строительства. Цвет ячейки — средняя оценка.\n\n🟢 Зелёный (9-10) — отличная работа\n🟡 Жёлтый (7-8) — нормально\n🟠 Оранжевый (4-6) — проблемы\n🔴 Красный (0-3) — критично\n\nЗачем: мгновенно видно, кто из сотрудников проседает на каком этапе. Например, прораб отлично справляется с фундаментом, но плохо с крышей — нужно обучение или замена.\n\nНаведите на ячейку для деталей." /></h3>
               <Heatmap responses={filtered} />
               <div className="flex justify-center gap-2 mt-4">
                 {[
@@ -1085,7 +1170,7 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
           {/* Stage detail cards */}
           <div className="bg-zinc-900 rounded-2xl border border-zinc-800">
             <div className="px-5 py-4 border-b border-zinc-800">
-              <h3 className="text-white font-medium">NPS по каждому этапу</h3>
+              <h3 className="text-white font-medium flex items-center">NPS по каждому этапу<SectionInfo title="NPS по 15 этапам строительства" text="Каждая карточка — один из 15 этапов строительного процесса (от «Мечта» до «Сервис»).\n\nЧисло справа — NPS Score этого этапа (−100 до +100).\nПолоска внизу — соотношение промоутеров/нейтральных/критиков.\n\nЗачем: видно, на каких этапах клиенты довольны, а где теряем лояльность. Позволяет точечно улучшать процесс.\n\nТипичные проблемные этапы: монтаж (задержки), коммуникации (сложность), фасад (качество)." /></h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-zinc-800">
               {STAGES.map((stage) => {
@@ -1133,12 +1218,13 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
               <h3 className="text-white font-medium flex items-center gap-2 mb-4">
                 <Users className="w-4 h-4 text-zinc-400" />
                 Рейтинг сотрудников по NPS
+                <SectionInfo title="Рейтинг сотрудников" text="Ранжирование сотрудников по их персональному NPS Score.\n\nКак считается: для каждого сотрудника берутся все оценки от его клиентов и считается NPS (% промоутеров − % критиков).\n\nЗачем:\n• Выявить лучших — для премирования и примера\n• Выявить отстающих — для обучения и поддержки\n• Объективная основа для кадровых решений\n\nВажно: учитывайте количество оценок. NPS 100 при 2 ответах менее надёжен, чем NPS 60 при 30 ответах." />
               </h3>
               <EmployeeRanking responses={filtered} />
             </div>
 
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
-              <h3 className="text-white font-medium mb-4">Тепловая карта: Сотрудники × Этапы</h3>
+              <h3 className="text-white font-medium mb-4 flex items-center">Тепловая карта: Сотрудники × Этапы<SectionInfo title="Heatmap (Тепловая карта)" text="Та же матрица сотрудников и этапов, что и на вкладке «Этапы».\n\nПозволяет увидеть сильные и слабые стороны каждого сотрудника по конкретным этапам строительства.\n\nИспользуйте для:\n• Подбора оптимальной бригады под проект\n• Планирования обучения\n• Ротации сотрудников между этапами" /></h3>
               <Heatmap responses={filtered} />
             </div>
           </div>
