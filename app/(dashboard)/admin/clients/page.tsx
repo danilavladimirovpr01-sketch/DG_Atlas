@@ -1,6 +1,8 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import ClientsTableWrapper from '@/components/admin/ClientsTableWrapper';
 
+export const dynamic = 'force-dynamic';
+
 async function getClients() {
   const supabase = createServiceRoleClient();
 

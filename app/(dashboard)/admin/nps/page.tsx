@@ -1,6 +1,8 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import NpsDashboard from '@/components/admin/NpsDashboard';
 
+export const dynamic = 'force-dynamic';
+
 interface NpsRow {
   id: string;
   client_id: string;
