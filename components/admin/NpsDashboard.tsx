@@ -223,7 +223,7 @@ function InfoTooltip({ title, text }: { title: string; text: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative inline-flex">
+    <div className="relative inline-flex" style={{ zIndex: open ? 100 : 'auto' }}>
       <button
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
@@ -234,11 +234,12 @@ function InfoTooltip({ title, text }: { title: string; text: string }) {
         <Info className="w-3 h-3 text-zinc-500" />
       </button>
       {open && (
-        <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-72 pointer-events-none">
-          <div className="w-2 h-2 bg-zinc-800 border-l border-t border-zinc-700 rotate-45 mx-auto -mb-1 relative z-10" />
-          <div className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl text-left">
-            <p className="text-zinc-200 text-xs font-semibold mb-1">{title}</p>
-            <p className="text-zinc-400 text-xs leading-relaxed whitespace-pre-line">{text}</p>
+        <div className="fixed inset-0 z-[9999] pointer-events-none flex items-start justify-center" style={{ display: 'contents' }}>
+          <div className="absolute top-full left-0 mt-2 w-72 z-[9999]" style={{ pointerEvents: 'none' }}>
+            <div className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl text-left">
+              <p className="text-zinc-200 text-xs font-semibold mb-1">{title}</p>
+              <p className="text-zinc-400 text-xs leading-relaxed whitespace-pre-line">{text}</p>
+            </div>
           </div>
         </div>
       )}
@@ -250,7 +251,7 @@ function SectionInfo({ title, text }: { title: string; text: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative inline-flex">
+    <div className="relative inline-flex" style={{ zIndex: open ? 100 : 'auto' }}>
       <button
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
@@ -261,8 +262,7 @@ function SectionInfo({ title, text }: { title: string; text: string }) {
         <Info className="w-3.5 h-3.5 text-zinc-500" />
       </button>
       {open && (
-        <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-80 pointer-events-none">
-          <div className="w-2 h-2 bg-zinc-800 border-l border-t border-zinc-700 rotate-45 mx-auto -mb-1 relative z-10" />
+        <div className="absolute top-full left-0 mt-2 w-80 z-[9999]" style={{ pointerEvents: 'none' }}>
           <div className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl text-left">
             <p className="text-zinc-200 text-xs font-semibold mb-1">{title}</p>
             <p className="text-zinc-400 text-xs leading-relaxed whitespace-pre-line">{text}</p>
@@ -290,8 +290,7 @@ function KpiCard({
   info?: { title: string; text: string };
 }) {
   return (
-    <div className={`rounded-2xl p-5 border bg-gradient-to-br ${bgClass} relative overflow-hidden`}>
-      <div className="absolute top-0 right-0 w-24 h-24 bg-white/[0.02] rounded-full -translate-y-8 translate-x-8" />
+    <div className={`rounded-2xl p-5 border bg-gradient-to-br ${bgClass} relative`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1">
           <p className="text-zinc-400 text-sm font-medium">{label}</p>
