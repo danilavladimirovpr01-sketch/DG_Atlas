@@ -234,12 +234,12 @@ function InfoTooltip({ title, text }: { title: string; text: string }) {
         <Info className="w-3 h-3 text-zinc-500" />
       </button>
       {open && (
-        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 pointer-events-none">
+        <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-72 pointer-events-none">
+          <div className="w-2 h-2 bg-zinc-800 border-l border-t border-zinc-700 rotate-45 mx-auto -mb-1 relative z-10" />
           <div className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl text-left">
             <p className="text-zinc-200 text-xs font-semibold mb-1">{title}</p>
             <p className="text-zinc-400 text-xs leading-relaxed whitespace-pre-line">{text}</p>
           </div>
-          <div className="w-2 h-2 bg-zinc-800 border-r border-b border-zinc-700 rotate-45 mx-auto -mt-1" />
         </div>
       )}
     </div>
@@ -261,12 +261,12 @@ function SectionInfo({ title, text }: { title: string; text: string }) {
         <Info className="w-3.5 h-3.5 text-zinc-500" />
       </button>
       {open && (
-        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 pointer-events-none">
+        <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-80 pointer-events-none">
+          <div className="w-2 h-2 bg-zinc-800 border-l border-t border-zinc-700 rotate-45 mx-auto -mb-1 relative z-10" />
           <div className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl text-left">
             <p className="text-zinc-200 text-xs font-semibold mb-1">{title}</p>
             <p className="text-zinc-400 text-xs leading-relaxed whitespace-pre-line">{text}</p>
           </div>
-          <div className="w-2 h-2 bg-zinc-800 border-r border-b border-zinc-700 rotate-45 mx-auto -mt-1" />
         </div>
       )}
     </div>
