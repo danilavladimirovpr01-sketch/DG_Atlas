@@ -88,7 +88,11 @@ export default function AdminCallsPage() {
         { event: '*', schema: 'public', table: 'calls' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setCalls((prev) => [payload.new as CallRow, ...prev]);
+            setCalls((prev) => {
+              // Prevent duplicates
+              if (prev.some((c) => c.id === (payload.new as CallRow).id)) return prev;
+              return [payload.new as CallRow, ...prev];
+            });
           } else if (payload.eventType === 'UPDATE') {
             setCalls((prev) =>
               prev.map((c) =>
@@ -122,8 +126,7 @@ export default function AdminCallsPage() {
 
         if (res.ok) {
           const call = await res.json();
-          setCalls((prev) => [call, ...prev]);
-
+          // Don't add manually — Realtime INSERT will handle it
           // Start analysis
           fetch(`/api/calls/${call.id}/analyze`, { method: 'POST' });
         }
@@ -133,7 +136,7 @@ export default function AdminCallsPage() {
     } finally {
       setUploading(false);
     }
-  }, []);
+  }, [selectedClient]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
