@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { STAGES } from '@/lib/constants/stages';
 import { POSITION_LABELS } from '@/lib/constants/nps-questions';
 import type { EmployeePosition } from '@/types';
-import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Users, AlertTriangle, Star, BarChart3 } from 'lucide-react';
+import { ChevronDown, ChevronRight, TrendingUp, Users, AlertTriangle, Star, BarChart3 } from 'lucide-react';
 import { NPS_QUESTIONS } from '@/lib/constants/nps-questions';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
