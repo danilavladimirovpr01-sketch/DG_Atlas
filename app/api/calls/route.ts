@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Audio file is required' }, { status: 400 });
     }
 
+    const clientId = formData.get('client_id') as string | null;
     const serviceClient = createServiceRoleClient();
 
     // Upload to Supabase Storage
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
       .from('calls')
       .insert({
         manager_id: user.id,
+        client_id: clientId || null,
         audio_url: urlData.publicUrl,
         analysis_status: 'pending',
       })

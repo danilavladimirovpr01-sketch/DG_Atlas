@@ -39,10 +39,31 @@ interface CallRow {
   ai_summary: string | null;
 }
 
+interface ClientOption {
+  id: string;
+  full_name: string;
+  phone: string | null;
+}
+
 export default function AdminCallsPage() {
   const [calls, setCalls] = useState<CallRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [selectedClient, setSelectedClient] = useState<string>('');
+
+  useEffect(() => {
+    async function loadClients() {
+      try {
+        const res = await fetch('/api/clients');
+        const data = await res.json();
+        if (Array.isArray(data)) setClients(data);
+      } catch {
+        // silently fail
+      }
+    }
+    loadClients();
+  }, []);
 
   async function loadCalls() {
     try {
@@ -92,6 +113,7 @@ export default function AdminCallsPage() {
       for (const file of acceptedFiles) {
         const formData = new FormData();
         formData.append('audio', file);
+        if (selectedClient) formData.append('client_id', selectedClient);
 
         const res = await fetch('/api/calls', {
           method: 'POST',
@@ -125,7 +147,22 @@ export default function AdminCallsPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-white">Все звонки</h1>
 
-      {/* Upload zone */}
+      {/* Client selector + Upload zone */}
+      <div className="flex items-center gap-4">
+        <select
+          value={selectedClient}
+          onChange={(e) => setSelectedClient(e.target.value)}
+          className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2.5 min-w-[200px]"
+        >
+          <option value="">Без привязки к клиенту</option>
+          {clients.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.full_name}{c.phone ? ` (${c.phone})` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${

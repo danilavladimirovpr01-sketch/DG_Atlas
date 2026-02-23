@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { STAGES } from '@/lib/constants/stages';
+import Link from 'next/link';
 
 interface ClientRow {
   id: string;
@@ -87,8 +88,10 @@ export default function ClientsTableWrapper({
             clients.map((client, i) => (
               <tr key={client.id} className="hover:bg-zinc-800/50">
                 <td className="px-5 py-3">
-                  <p className="text-white text-sm">{client.full_name}</p>
-                  <p className="text-zinc-500 text-xs">{client.phone || '—'}</p>
+                  <Link href={`/admin/clients/${client.id}`} className="hover:underline">
+                    <p className="text-white text-sm">{client.full_name}</p>
+                    <p className="text-zinc-500 text-xs">{client.phone || '—'}</p>
+                  </Link>
                 </td>
                 <td className="px-5 py-3 text-zinc-300 text-sm">
                   {client.project?.title || '—'}

@@ -58,6 +58,7 @@ export interface NpsResponse {
 export interface Call {
   id: string;
   manager_id: string;
+  client_id: string | null;
   audio_url: string;
   transcript: string | null;
   score: number | null;
