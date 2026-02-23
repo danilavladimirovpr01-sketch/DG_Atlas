@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Phone, Star, MessageSquare, User } from 'lucide-react';
+import { ArrowLeft, Phone, Star, MessageSquare, User, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { STAGES } from '@/lib/constants/stages';
-import { POSITION_LABELS } from '@/lib/constants/nps-questions';
+import { NPS_QUESTIONS, POSITION_LABELS } from '@/lib/constants/nps-questions';
 import type { EmployeePosition } from '@/types';
 
 interface ClientProfile {
@@ -252,37 +252,95 @@ export default function ClientDetailPage() {
   );
 }
 
+function getQuestionLabel(stage: number, key: string): string {
+  const config = NPS_QUESTIONS[stage];
+  if (!config) return key;
+  const q = config.questions.find((q) => q.key === key);
+  return q?.label || key;
+}
+
+function ratingBarColor(value: number) {
+  if (value >= 8) return 'bg-green-500';
+  if (value >= 6) return 'bg-yellow-500';
+  return 'bg-red-500';
+}
+
 function NpsTimelineItem({ data }: { data: NpsItem }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const answerEntries = Object.entries(data.answers || {}).filter(
+    ([, v]) => v !== null && v !== undefined && v !== ''
+  );
+
   return (
-    <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-yellow-900/50 flex items-center justify-center shrink-0 mt-0.5">
-        <Star className="w-4 h-4 text-yellow-400" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-white text-sm font-medium">
-              NPS: {stageName(data.stage)}
-            </p>
-            {data.employees && (
-              <p className="text-zinc-500 text-xs">
-                Сотрудник: {data.employees.full_name}
-                {data.employees.position && ` (${POSITION_LABELS[data.employees.position as EmployeePosition] || data.employees.position})`}
-              </p>
-            )}
-          </div>
-          <div className="text-right">
-            <span className={`text-xl font-bold ${npsScoreColor(data.score)}`}>
-              {data.score}
-            </span>
-            <span className="text-zinc-600 text-xs">/10</span>
-          </div>
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full text-left flex items-start gap-3"
+      >
+        <div className="w-8 h-8 rounded-lg bg-yellow-900/50 flex items-center justify-center shrink-0 mt-0.5">
+          <Star className="w-4 h-4 text-yellow-400" />
         </div>
-        {data.comment && (
-          <p className="text-zinc-400 text-sm mt-1">&laquo;{data.comment}&raquo;</p>
-        )}
-        <p className="text-zinc-600 text-xs mt-1">{formatDate(data.created_at)}</p>
-      </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-sm font-medium">
+                NPS: {stageName(data.stage)}
+              </p>
+              {data.employees && (
+                <p className="text-zinc-500 text-xs">
+                  Сотрудник: {data.employees.full_name}
+                  {data.employees.position && ` (${POSITION_LABELS[data.employees.position as EmployeePosition] || data.employees.position})`}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <span className={`text-xl font-bold ${npsScoreColor(data.score)}`}>
+                  {data.score}
+                </span>
+                <span className="text-zinc-600 text-xs">/10</span>
+              </div>
+              {answerEntries.length > 0 && (
+                expanded
+                  ? <ChevronUp className="w-4 h-4 text-zinc-500" />
+                  : <ChevronDown className="w-4 h-4 text-zinc-500" />
+              )}
+            </div>
+          </div>
+          {data.comment && (
+            <p className="text-zinc-400 text-sm mt-1">&laquo;{data.comment}&raquo;</p>
+          )}
+          <p className="text-zinc-600 text-xs mt-1">{formatDate(data.created_at)}</p>
+        </div>
+      </button>
+
+      {expanded && answerEntries.length > 0 && (
+        <div className="mt-3 ml-11 space-y-2 border-t border-zinc-800 pt-3">
+          {answerEntries.map(([key, value]) => (
+            <div key={key}>
+              <p className="text-zinc-400 text-xs mb-1">
+                {getQuestionLabel(data.stage, key)}
+              </p>
+              {typeof value === 'number' ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${ratingBarColor(value)}`}
+                      style={{ width: `${value * 10}%` }}
+                    />
+                  </div>
+                  <span className={`text-sm font-bold ${npsScoreColor(value)}`}>
+                    {value}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-zinc-300 text-sm">&laquo;{value}&raquo;</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
