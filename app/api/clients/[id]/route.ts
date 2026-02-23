@@ -39,14 +39,15 @@ export async function GET(
       .order('created_at', { ascending: false });
 
     // 4. Calls linked to this client
-    const { data: calls } = await supabase
+    const { data: calls, error: callsError } = await supabase
       .from('calls')
-      .select(`
-        id, score, analysis_status, ai_summary, created_at,
-        profiles!calls_manager_id_fkey(full_name)
-      `)
+      .select('id, score, analysis_status, ai_summary, created_at, manager_id, client_id')
       .eq('client_id', id)
       .order('created_at', { ascending: false });
+
+    if (callsError) {
+      console.error('Calls query error:', callsError);
+    }
 
     return NextResponse.json({
       profile,
@@ -57,12 +58,7 @@ export async function GET(
           ? r.employees
           : null,
       })),
-      calls: (calls || []).map((c: Record<string, unknown>) => ({
-        ...c,
-        profiles: c.profiles && typeof c.profiles === 'object' && !('message' in (c.profiles as Record<string, unknown>))
-          ? c.profiles
-          : null,
-      })),
+      calls: calls || [],
     });
   } catch (error) {
     console.error('Client detail error:', error);
