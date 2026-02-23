@@ -20,7 +20,7 @@ export async function GET() {
 
     let query = serviceClient
       .from('calls')
-      .select('*, profiles!calls_manager_id_fkey(full_name)')
+      .select('id, created_at, audio_url, analysis_status, score, ai_summary, transcript, client_id, manager_id, profiles!calls_manager_id_fkey(full_name)')
       .order('created_at', { ascending: false });
 
     // Managers only see their own calls
