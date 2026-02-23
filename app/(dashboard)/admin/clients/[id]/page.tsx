@@ -102,7 +102,7 @@ export default function ClientDetailPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/clients/${id}`);
+        const res = await fetch(`/api/clients/${id}`, { cache: 'no-store' });
         if (res.ok) setClient(await res.json());
       } catch {
         // Failed
