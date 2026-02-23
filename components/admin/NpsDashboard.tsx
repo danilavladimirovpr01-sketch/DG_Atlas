@@ -2,18 +2,27 @@
 
 import { useState, useMemo } from 'react';
 import { STAGES } from '@/lib/constants/stages';
-import { POSITION_LABELS } from '@/lib/constants/nps-questions';
+import { POSITION_LABELS, NPS_QUESTIONS } from '@/lib/constants/nps-questions';
 import type { EmployeePosition } from '@/types';
-import { ChevronDown, ChevronRight, TrendingUp, Users, AlertTriangle, Star, BarChart3 } from 'lucide-react';
-import { NPS_QUESTIONS } from '@/lib/constants/nps-questions';
+import {
+  TrendingUp, TrendingDown, Users, AlertTriangle, Star, BarChart3,
+  Activity, DollarSign, MessageCircleWarning,
+  ChevronDown, ChevronRight, Clock, CheckCircle2, AlertCircle,
+  Zap,
+} from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadialBarChart, RadialBar, PieChart, Pie, Cell,
-  AreaChart, Area,
+  Area, Line, ComposedChart,
 } from 'recharts';
+
+// ============================================================================
+// TYPES
+// ============================================================================
 
 interface NpsResponseItem {
   id: string;
+  clientId?: string;
   stage: number;
   score: number;
   comment: string | null;
@@ -24,34 +33,123 @@ interface NpsResponseItem {
   createdAt: string;
 }
 
-interface StageStats {
-  stage: number;
-  count: number;
-  avgScore: number;
-}
-
-interface EmployeeStats {
-  id: string;
-  name: string;
-  position: string;
-  count: number;
-  avgScore: number;
-}
-
-interface KpiData {
-  npsScore: number;
-  avgScore: number;
-  totalResponses: number;
-  promoters: number;
-  detractors: number;
-  worstStage: StageStats | null;
-}
-
 interface Props {
-  kpi: KpiData;
-  byStage: StageStats[];
-  byEmployee: EmployeeStats[];
   responses: NpsResponseItem[];
+  totalClients: number;
+  totalProjects: number;
+}
+
+type Period = '7d' | '30d' | '90d' | 'all';
+
+// ============================================================================
+// DEMO DATA GENERATOR
+// ============================================================================
+
+function generateDemoData(): NpsResponseItem[] {
+  const names = [
+    'Алексей Иванов', 'Мария Козлова', 'Сергей Николаев', 'Ольга Петрова',
+    'Дмитрий Сидоров', 'Елена Волкова', 'Андрей Морозов', 'Наталья Лебедева',
+    'Игорь Новиков', 'Татьяна Соколова', 'Артём Кузнецов', 'Анна Попова',
+    'Максим Васильев', 'Ирина Зайцева', 'Павел Голубев', 'Юлия Виноградова',
+  ];
+  const employees = [
+    { name: 'Иван Строков', pos: 'foreman' },
+    { name: 'Пётр Каменев', pos: 'foreman' },
+    { name: 'Алексей Кровлёв', pos: 'foreman' },
+    { name: 'Михаил Фасадов', pos: 'foreman' },
+    { name: 'Сергей Планов', pos: 'manager' },
+    { name: 'Ольга Проектова', pos: 'architect' },
+    { name: 'Дмитрий Надзоров', pos: 'project_manager' },
+    { name: 'Анна Сметина', pos: 'manager' },
+  ];
+  const comments: Record<string, string[]> = {
+    good: [
+      'Всё отлично, рекомендую!', 'Профессиональная команда', 'Быстро и качественно',
+      'Очень доволен результатом', 'Превзошли ожидания', 'Спасибо за работу!',
+      'Качество на высоте', 'Рекомендую знакомым',
+    ],
+    mid: [
+      'В целом нормально, но есть мелкие недочёты', 'Можно было бы быстрее',
+      'Качество хорошее, но коммуникация хромает', 'Есть к чему стремиться',
+    ],
+    bad: [
+      'Задержка на 2 недели, никто не предупредил', 'Мусор не убрали после работ',
+      'Не отвечали на звонки 3 дня', 'Пришлось переделывать штукатурку',
+      'Материалы пришли с дефектом', 'Бригада опаздывала каждый день',
+      'Сроки сорваны, качество низкое', 'Не соответствует проекту',
+    ],
+  };
+
+  const demo: NpsResponseItem[] = [];
+  const now = Date.now();
+
+  for (let i = 0; i < 120; i++) {
+    const stage = Math.floor(Math.random() * 15);
+    // Weighted score: stages 5,6,8 tend to be lower (construction issues)
+    let baseScore: number;
+    if ([5, 6, 8].includes(stage)) {
+      baseScore = Math.random() > 0.4 ? Math.floor(Math.random() * 4) + 5 : Math.floor(Math.random() * 3) + 8;
+    } else if ([0, 1, 13, 14].includes(stage)) {
+      baseScore = Math.random() > 0.2 ? Math.floor(Math.random() * 3) + 8 : Math.floor(Math.random() * 4) + 4;
+    } else {
+      baseScore = Math.floor(Math.random() * 5) + 5 + Math.floor(Math.random() * 2);
+    }
+    const score = Math.max(0, Math.min(10, baseScore));
+    const emp = employees[Math.floor(Math.random() * employees.length)];
+    const commentPool = score >= 9 ? comments.good : score >= 7 ? comments.mid : comments.bad;
+    const hasComment = Math.random() > 0.3;
+    const daysAgo = Math.floor(Math.random() * 180);
+    const date = new Date(now - daysAgo * 86400000);
+
+    demo.push({
+      id: `demo-${i}`,
+      clientId: `demo-client-${i % names.length}`,
+      stage,
+      score,
+      comment: hasComment ? commentPool[Math.floor(Math.random() * commentPool.length)] : null,
+      answers: {},
+      employeeName: emp.name,
+      employeePosition: emp.pos,
+      clientName: names[i % names.length],
+      createdAt: date.toISOString(),
+    });
+  }
+  return demo;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+const COLORS = {
+  green: '#22c55e',
+  lime: '#84cc16',
+  yellow: '#eab308',
+  orange: '#f97316',
+  red: '#ef4444',
+  blue: '#3b82f6',
+  cyan: '#06b6d4',
+  purple: '#a855f7',
+  zinc: '#3f3f46',
+  zinc700: '#3f3f46',
+  zinc800: '#27272a',
+  white: '#ffffff',
+};
+
+const PERIOD_LABELS: Record<Period, string> = {
+  '7d': '7 дней',
+  '30d': '30 дней',
+  '90d': '90 дней',
+  all: 'Всё время',
+};
+
+function stageName(stage: number) {
+  return STAGES[stage]?.title || `Этап ${stage}`;
+}
+
+function stageShortName(stage: number) {
+  const name = STAGES[stage]?.title || `${stage}`;
+  return name.length > 12 ? name.slice(0, 12) + '…' : name;
 }
 
 function scoreColor(score: number) {
@@ -60,31 +158,16 @@ function scoreColor(score: number) {
   return 'text-red-400';
 }
 
-function scoreBg(score: number) {
-  if (score >= 8) return 'bg-green-500/10 border-green-500/20';
-  if (score >= 6) return 'bg-yellow-500/10 border-yellow-500/20';
-  return 'bg-red-500/10 border-red-500/20';
-}
-
 function npsColor(score: number) {
   if (score >= 50) return 'text-green-400';
   if (score >= 0) return 'text-yellow-400';
   return 'text-red-400';
 }
 
-function npsBg(score: number) {
-  if (score >= 50) return 'bg-green-500/10 border-green-500/20';
-  if (score >= 0) return 'bg-yellow-500/10 border-yellow-500/20';
-  return 'bg-red-500/10 border-red-500/20';
-}
-
-function stageName(stage: number) {
-  return STAGES[stage]?.title || `Этап ${stage}`;
-}
-
-function stageShortName(stage: number) {
-  const name = STAGES[stage]?.title || `${stage}`;
-  return name.length > 10 ? name.slice(0, 10) + '...' : name;
+function npsBgGradient(score: number) {
+  if (score >= 50) return 'from-green-500/10 to-green-500/5 border-green-500/20';
+  if (score >= 0) return 'from-yellow-500/10 to-yellow-500/5 border-yellow-500/20';
+  return 'from-red-500/10 to-red-500/5 border-red-500/20';
 }
 
 function formatDate(dateStr: string) {
@@ -96,6 +179,13 @@ function formatDate(dateStr: string) {
   });
 }
 
+function formatShortDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
 function getQuestionLabel(stage: number, key: string): string {
   const config = NPS_QUESTIONS[stage];
   if (!config) return key;
@@ -103,55 +193,549 @@ function getQuestionLabel(stage: number, key: string): string {
   return q?.label || key;
 }
 
-const COLORS = {
-  green: '#22c55e',
-  yellow: '#eab308',
-  red: '#ef4444',
-  zinc: '#3f3f46',
-  white: '#ffffff',
-};
-
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 shadow-xl">
-      <p className="text-zinc-400 text-xs">{label}</p>
-      <p className="text-white font-bold">{payload[0].value}</p>
-    </div>
-  );
+function filterByPeriod(responses: NpsResponseItem[], period: Period): NpsResponseItem[] {
+  if (period === 'all') return responses;
+  const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+  const cutoff = Date.now() - days * 86400000;
+  return responses.filter((r) => new Date(r.createdAt).getTime() >= cutoff);
 }
 
-// --- KPI Card ---
+function calcNps(responses: NpsResponseItem[]) {
+  const total = responses.length;
+  if (total === 0) return { npsScore: 0, avgScore: 0, promoters: 0, passives: 0, detractors: 0, total: 0 };
+  const promoters = responses.filter((r) => r.score >= 9).length;
+  const detractors = responses.filter((r) => r.score <= 6).length;
+  const passives = total - promoters - detractors;
+  const npsScore = Math.round(((promoters - detractors) / total) * 100);
+  const avgScore = Math.round((responses.reduce((s, r) => s + r.score, 0) / total) * 10) / 10;
+  return { npsScore, avgScore, promoters, passives, detractors, total };
+}
+
+// ============================================================================
+// CUSTOM TOOLTIP
+// ============================================================================
+
+// ============================================================================
+// KPI CARD
+// ============================================================================
+
 function KpiCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  colorClass,
-  bgClass,
+  icon: Icon, label, value, sub, trend, colorClass, bgClass,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string | number;
   sub?: string | null;
+  trend?: { value: number; label: string } | null;
   colorClass: string;
   bgClass: string;
 }) {
   return (
-    <div className={`rounded-xl p-5 border ${bgClass}`}>
+    <div className={`rounded-2xl p-5 border bg-gradient-to-br ${bgClass} relative overflow-hidden`}>
+      <div className="absolute top-0 right-0 w-24 h-24 bg-white/[0.02] rounded-full -translate-y-8 translate-x-8" />
       <div className="flex items-center justify-between mb-3">
-        <p className="text-zinc-400 text-sm">{label}</p>
-        <div className="w-8 h-8 rounded-lg bg-zinc-800/50 flex items-center justify-center">
-          <Icon className="w-4 h-4 text-zinc-400" />
+        <p className="text-zinc-400 text-sm font-medium">{label}</p>
+        <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center backdrop-blur-sm">
+          <Icon className="w-4.5 h-4.5 text-zinc-400" />
         </div>
       </div>
-      <p className={`text-3xl font-bold ${colorClass}`}>{value}</p>
-      {sub && <p className="text-zinc-500 text-sm mt-1">{sub}</p>}
+      <p className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</p>
+      <div className="flex items-center gap-2 mt-1.5">
+        {sub && <p className="text-zinc-500 text-sm">{sub}</p>}
+        {trend && (
+          <span className={`text-xs font-medium flex items-center gap-0.5 ${trend.value >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {trend.value >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {trend.value >= 0 ? '+' : ''}{trend.value} {trend.label}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
-// --- Response Card ---
+// ============================================================================
+// NPS GAUGE (modern)
+// ============================================================================
+
+function NpsGauge({ score }: { score: number }) {
+  const normalizedScore = Math.max(-100, Math.min(100, score));
+  const percentage = ((normalizedScore + 100) / 200) * 100;
+  const color = normalizedScore >= 50 ? COLORS.green : normalizedScore >= 0 ? COLORS.yellow : COLORS.red;
+  const data = [{ value: percentage, fill: color }];
+
+  return (
+    <div className="relative w-full h-44">
+      <ResponsiveContainer>
+        <RadialBarChart
+          cx="50%" cy="85%"
+          innerRadius="65%" outerRadius="95%"
+          startAngle={180} endAngle={0}
+          barSize={14}
+          data={data}
+        >
+          <RadialBar
+            background={{ fill: COLORS.zinc800 }}
+            dataKey="value"
+            cornerRadius={7}
+          />
+        </RadialBarChart>
+      </ResponsiveContainer>
+      <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
+        <span className="text-5xl font-black tracking-tight" style={{ color }}>{score}</span>
+        <span className="text-zinc-500 text-xs font-medium mt-0.5">NPS SCORE</span>
+      </div>
+      {/* Scale labels */}
+      <div className="absolute bottom-2 left-[10%] text-zinc-600 text-[10px]">-100</div>
+      <div className="absolute bottom-2 right-[10%] text-zinc-600 text-[10px]">+100</div>
+    </div>
+  );
+}
+
+// ============================================================================
+// SCORE DISTRIBUTION HISTOGRAM (0-10)
+// ============================================================================
+
+function ScoreHistogram({ responses }: { responses: NpsResponseItem[] }) {
+  const data = useMemo(() => {
+    const counts = Array(11).fill(0);
+    for (const r of responses) counts[r.score]++;
+    return counts.map((count, score) => ({
+      score: String(score),
+      count,
+      fill: score >= 9 ? COLORS.green : score >= 7 ? COLORS.yellow : COLORS.red,
+    }));
+  }, [responses]);
+
+  return (
+    <div className="h-52">
+      <ResponsiveContainer>
+        <BarChart data={data} barCategoryGap="15%">
+          <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+          <XAxis dataKey="score" tick={{ fill: '#a1a1aa', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} width={30} />
+          <Tooltip content={({ active, payload, label }) => {
+            if (!active || !payload?.length) return null;
+            const score = Number(label);
+            const cat = score >= 9 ? 'Промоутер' : score >= 7 ? 'Нейтральный' : 'Критик';
+            return (
+              <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl">
+                <p className="text-zinc-400 text-xs">Оценка {label} — {cat}</p>
+                <p className="text-white font-bold text-lg">{payload[0].value} ответов</p>
+              </div>
+            );
+          }} />
+          <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+            {data.map((entry, i) => (
+              <Cell key={i} fill={entry.fill} fillOpacity={0.85} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ============================================================================
+// NPS TREND LINE (actual NPS over time, not avg score)
+// ============================================================================
+
+function NpsTrendChart({ responses }: { responses: NpsResponseItem[] }) {
+  const data = useMemo(() => {
+    if (responses.length === 0) return [];
+    const sorted = [...responses].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const weekMap: Record<string, NpsResponseItem[]> = {};
+    for (const r of sorted) {
+      const d = new Date(r.createdAt);
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().split('T')[0];
+      if (!weekMap[key]) weekMap[key] = [];
+      weekMap[key].push(r);
+    }
+    return Object.entries(weekMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-16)
+      .map(([, items]) => {
+        const { npsScore, avgScore } = calcNps(items);
+        const label = new Date(items[0].createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        return { name: label, nps: npsScore, avg: avgScore, count: items.length };
+      });
+  }, [responses]);
+
+  if (data.length < 2) return <div className="h-56 flex items-center justify-center text-zinc-500 text-sm">Недостаточно данных</div>;
+
+  return (
+    <div className="h-56">
+      <ResponsiveContainer>
+        <ComposedChart data={data}>
+          <defs>
+            <linearGradient id="npsGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={COLORS.cyan} stopOpacity={0.2} />
+              <stop offset="100%" stopColor={COLORS.cyan} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+          <XAxis dataKey="name" tick={{ fill: '#71717a', fontSize: 10 }} axisLine={false} tickLine={false} />
+          <YAxis yAxisId="nps" domain={[-100, 100]} tick={{ fill: '#71717a', fontSize: 10 }} axisLine={false} tickLine={false} width={35} />
+          <YAxis yAxisId="avg" orientation="right" domain={[0, 10]} tick={{ fill: '#71717a', fontSize: 10 }} axisLine={false} tickLine={false} width={25} />
+          <Tooltip content={({ active, payload, label }) => {
+            if (!active || !payload?.length) return null;
+            return (
+              <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl">
+                <p className="text-zinc-400 text-xs mb-1">{label}</p>
+                {payload.map((p, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color as string }} />
+                    <span className="text-white font-semibold">{String(p.value)}</span>
+                    <span className="text-zinc-500 text-xs">{p.name === 'nps' ? 'NPS' : 'Ср. оценка'}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          }} />
+          <Area yAxisId="nps" type="monotone" dataKey="nps" stroke={COLORS.cyan} fill="url(#npsGrad)" strokeWidth={2.5} name="nps" dot={false} />
+          <Line yAxisId="avg" type="monotone" dataKey="avg" stroke={COLORS.purple} strokeWidth={2} strokeDasharray="4 4" name="avg" dot={false} />
+        </ComposedChart>
+      </ResponsiveContainer>
+      <div className="flex justify-center gap-6 mt-2">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-0.5 rounded bg-cyan-500" />
+          <span className="text-zinc-500 text-xs">NPS Score</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-0.5 rounded bg-purple-500 opacity-60" style={{ borderTop: '1px dashed' }} />
+          <span className="text-zinc-500 text-xs">Ср. оценка</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// STACKED BAR BY STAGES
+// ============================================================================
+
+function StagesStackedChart({ responses }: { responses: NpsResponseItem[] }) {
+  const data = useMemo(() => {
+    const map: Record<number, { promoters: number; passives: number; detractors: number }> = {};
+    for (const r of responses) {
+      if (!map[r.stage]) map[r.stage] = { promoters: 0, passives: 0, detractors: 0 };
+      if (r.score >= 9) map[r.stage].promoters++;
+      else if (r.score >= 7) map[r.stage].passives++;
+      else map[r.stage].detractors++;
+    }
+    return Object.entries(map)
+      .map(([stage, counts]) => ({
+        stage: Number(stage),
+        name: stageShortName(Number(stage)),
+        fullName: stageName(Number(stage)),
+        ...counts,
+        total: counts.promoters + counts.passives + counts.detractors,
+      }))
+      .sort((a, b) => a.stage - b.stage);
+  }, [responses]);
+
+  if (data.length === 0) return <div className="h-72 flex items-center justify-center text-zinc-500">Нет данных</div>;
+
+  return (
+    <div className="h-72">
+      <ResponsiveContainer>
+        <BarChart data={data} layout="vertical" margin={{ left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
+          <XAxis type="number" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="name" tick={{ fill: '#a1a1aa', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
+          <Tooltip content={({ active, payload }) => {
+            if (!active || !payload?.length) return null;
+            const d = payload[0]?.payload;
+            if (!d) return null;
+            return (
+              <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl">
+                <p className="text-zinc-300 text-sm font-medium mb-1">{d.fullName}</p>
+                <div className="space-y-0.5 text-xs">
+                  <p className="text-green-400">Промоутеры: {d.promoters}</p>
+                  <p className="text-yellow-400">Нейтральные: {d.passives}</p>
+                  <p className="text-red-400">Критики: {d.detractors}</p>
+                </div>
+              </div>
+            );
+          }} />
+          <Bar dataKey="promoters" stackId="a" fill={COLORS.green} fillOpacity={0.8} radius={[0, 0, 0, 0]} name="Промоутеры" />
+          <Bar dataKey="passives" stackId="a" fill={COLORS.yellow} fillOpacity={0.8} name="Нейтральные" />
+          <Bar dataKey="detractors" stackId="a" fill={COLORS.red} fillOpacity={0.8} radius={[0, 4, 4, 0]} name="Критики" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ============================================================================
+// HEATMAP — STAGES x EMPLOYEES
+// ============================================================================
+
+function Heatmap({ responses }: { responses: NpsResponseItem[] }) {
+  const { employees, stages, matrix } = useMemo(() => {
+    const empSet = new Set<string>();
+    const stageSet = new Set<number>();
+    const map: Record<string, Record<number, { total: number; count: number }>> = {};
+
+    for (const r of responses) {
+      const emp = r.employeeName || 'Неизвестен';
+      empSet.add(emp);
+      stageSet.add(r.stage);
+      if (!map[emp]) map[emp] = {};
+      if (!map[emp][r.stage]) map[emp][r.stage] = { total: 0, count: 0 };
+      map[emp][r.stage].total += r.score;
+      map[emp][r.stage].count++;
+    }
+
+    return {
+      employees: Array.from(empSet).sort(),
+      stages: Array.from(stageSet).sort((a, b) => a - b),
+      matrix: map,
+    };
+  }, [responses]);
+
+  if (employees.length === 0 || stages.length === 0) {
+    return <div className="h-48 flex items-center justify-center text-zinc-500">Нет данных</div>;
+  }
+
+  function heatColor(avg: number): string {
+    if (avg >= 9) return 'bg-green-500/80';
+    if (avg >= 8) return 'bg-green-500/50';
+    if (avg >= 7) return 'bg-yellow-500/50';
+    if (avg >= 6) return 'bg-yellow-500/30';
+    if (avg >= 4) return 'bg-orange-500/50';
+    return 'bg-red-500/60';
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr>
+            <th className="text-left text-zinc-500 font-medium py-2 pr-3 sticky left-0 bg-zinc-900">Сотрудник</th>
+            {stages.map((s) => (
+              <th key={s} className="text-center text-zinc-500 font-medium py-2 px-1 min-w-[36px]">
+                <span className="block truncate max-w-[50px]" title={stageName(s)}>{s}</span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {employees.map((emp) => (
+            <tr key={emp}>
+              <td className="text-zinc-300 py-1.5 pr-3 sticky left-0 bg-zinc-900 font-medium whitespace-nowrap max-w-[120px] truncate" title={emp}>
+                {emp.split(' ').slice(0, 2).join(' ')}
+              </td>
+              {stages.map((s) => {
+                const cell = matrix[emp]?.[s];
+                if (!cell) return <td key={s} className="p-1"><div className="w-8 h-8 rounded-md bg-zinc-800/50" /></td>;
+                const avg = Math.round((cell.total / cell.count) * 10) / 10;
+                return (
+                  <td key={s} className="p-1">
+                    <div
+                      className={`w-8 h-8 rounded-md flex items-center justify-center font-bold text-white ${heatColor(avg)} transition-all hover:scale-110 cursor-default`}
+                      title={`${emp} — ${stageName(s)}: ${avg} (${cell.count} отв.)`}
+                    >
+                      {avg.toFixed(0)}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ============================================================================
+// EMPLOYEE RANKING
+// ============================================================================
+
+function EmployeeRanking({ responses }: { responses: NpsResponseItem[] }) {
+  const employees = useMemo(() => {
+    const map: Record<string, { pos: string; total: number; count: number }> = {};
+    for (const r of responses) {
+      if (!r.employeeName) continue;
+      if (!map[r.employeeName]) map[r.employeeName] = { pos: r.employeePosition || '', total: 0, count: 0 };
+      map[r.employeeName].total += r.score;
+      map[r.employeeName].count++;
+    }
+    return Object.entries(map)
+      .map(([name, s]) => ({
+        name,
+        position: s.pos,
+        avg: Math.round((s.total / s.count) * 10) / 10,
+        count: s.count,
+        nps: (() => {
+          const empResponses = responses.filter((r) => r.employeeName === name);
+          const p = empResponses.filter((r) => r.score >= 9).length;
+          const d = empResponses.filter((r) => r.score <= 6).length;
+          return empResponses.length > 0 ? Math.round(((p - d) / empResponses.length) * 100) : 0;
+        })(),
+      }))
+      .sort((a, b) => b.nps - a.nps);
+  }, [responses]);
+
+  if (employees.length === 0) return <div className="h-48 flex items-center justify-center text-zinc-500">Нет данных</div>;
+
+  return (
+    <div className="space-y-2">
+      {employees.map((emp, i) => (
+        <div key={emp.name} className="flex items-center gap-3 py-2 px-1 rounded-lg hover:bg-zinc-800/50 transition-colors">
+          <span className={`w-6 text-center font-bold text-sm ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-zinc-300' : i === 2 ? 'text-orange-400' : 'text-zinc-600'}`}>
+            {i + 1}
+          </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-zinc-200 text-sm font-medium">{emp.name}</p>
+                <p className="text-zinc-600 text-xs">
+                  {POSITION_LABELS[emp.position as EmployeePosition] || emp.position} · {emp.count} оценок
+                </p>
+              </div>
+              <div className="text-right">
+                <span className={`text-lg font-bold ${npsColor(emp.nps)}`}>{emp.nps}</span>
+                <p className="text-zinc-600 text-[10px]">NPS</p>
+              </div>
+            </div>
+            <div className="mt-1.5 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.max(5, ((emp.nps + 100) / 200) * 100)}%`,
+                  backgroundColor: emp.nps >= 50 ? COLORS.green : emp.nps >= 0 ? COLORS.yellow : COLORS.red,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================================
+// DETRACTOR COMMENTS (Closed-Loop)
+// ============================================================================
+
+function DetractorPanel({ responses }: { responses: NpsResponseItem[] }) {
+  const detractors = useMemo(() =>
+    responses
+      .filter((r) => r.score <= 6)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 15),
+    [responses]
+  );
+
+  if (detractors.length === 0) {
+    return (
+      <div className="h-48 flex flex-col items-center justify-center text-zinc-500 gap-2">
+        <CheckCircle2 className="w-8 h-8 text-green-500/50" />
+        <span className="text-sm">Нет критиков — отличная работа!</span>
+      </div>
+    );
+  }
+
+  // Simulate closed-loop statuses for demo
+  const statuses = ['new', 'in_progress', 'resolved'] as const;
+  const statusConfig = {
+    new: { label: 'Новый', icon: AlertCircle, color: 'text-red-400 bg-red-500/10' },
+    in_progress: { label: 'В работе', icon: Clock, color: 'text-yellow-400 bg-yellow-500/10' },
+    resolved: { label: 'Решён', icon: CheckCircle2, color: 'text-green-400 bg-green-500/10' },
+  };
+
+  return (
+    <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-1">
+      {detractors.map((r, i) => {
+        const status = statuses[i % 3]; // Demo rotation
+        const cfg = statusConfig[status];
+        const StatusIcon = cfg.icon;
+        return (
+          <div key={r.id} className="px-4 py-3 rounded-xl bg-zinc-800/30 border border-zinc-800 hover:border-zinc-700 transition-colors">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-red-400 font-bold text-lg">{r.score}</span>
+                  <span className="text-zinc-300 text-sm font-medium">{r.clientName || 'Клиент'}</span>
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ${cfg.color}`}>
+                    <StatusIcon className="w-3 h-3" /> {cfg.label}
+                  </span>
+                </div>
+                <p className="text-zinc-500 text-xs mt-0.5">
+                  {stageName(r.stage)} · {r.employeeName || '—'} · {formatShortDate(r.createdAt)}
+                </p>
+                {r.comment && (
+                  <p className="text-zinc-400 text-sm mt-1.5 leading-relaxed">&laquo;{r.comment}&raquo;</p>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================================================
+// DISTRIBUTION PIE (modern donut)
+// ============================================================================
+
+function DistributionDonut({ promoters, passives, detractors }: { promoters: number; passives: number; detractors: number }) {
+  const total = promoters + passives + detractors;
+  const data = [
+    { name: 'Промоутеры', value: promoters, fill: COLORS.green },
+    { name: 'Нейтральные', value: passives, fill: COLORS.yellow },
+    { name: 'Критики', value: detractors, fill: COLORS.red },
+  ].filter(d => d.value > 0);
+
+  if (data.length === 0) return <div className="h-52 flex items-center justify-center text-zinc-500">Нет данных</div>;
+
+  return (
+    <div className="h-52 relative">
+      <ResponsiveContainer>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%" cy="50%"
+            innerRadius={55}
+            outerRadius={80}
+            paddingAngle={3}
+            dataKey="value"
+            strokeWidth={0}
+          >
+            {data.map((entry, i) => (
+              <Cell key={i} fill={entry.fill} />
+            ))}
+          </Pie>
+          <Tooltip content={({ active, payload }) => {
+            if (!active || !payload?.length) return null;
+            const d = payload[0];
+            const pct = total > 0 ? Math.round((Number(d.value) / total) * 100) : 0;
+            return (
+              <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 shadow-2xl">
+                <p className="text-zinc-300 text-xs">{d.name}</p>
+                <p className="text-white font-bold">{String(d.value)} ({pct}%)</p>
+              </div>
+            );
+          }} />
+        </PieChart>
+      </ResponsiveContainer>
+      {/* Center label */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <span className="text-2xl font-bold text-white">{total}</span>
+        <span className="text-zinc-500 text-[10px]">ОТВЕТОВ</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// RESPONSE CARD (expandable)
+// ============================================================================
+
 function ResponseCard({ r }: { r: NpsResponseItem }) {
   const [expanded, setExpanded] = useState(false);
   const answerEntries = Object.entries(r.answers || {}).filter(
@@ -160,24 +744,23 @@ function ResponseCard({ r }: { r: NpsResponseItem }) {
   const hasDetails = answerEntries.length > 0;
 
   return (
-    <div className="px-5 py-3 hover:bg-zinc-800/50 transition-colors">
-      <button
-        onClick={() => hasDetails && setExpanded(!expanded)}
-        className="w-full text-left"
-      >
+    <div className="px-5 py-3 hover:bg-zinc-800/30 transition-colors">
+      <button onClick={() => hasDetails && setExpanded(!expanded)} className="w-full text-left">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className={`text-xl font-bold w-8 ${scoreColor(r.score)}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${
+              r.score >= 9 ? 'bg-green-500/15 text-green-400' :
+              r.score >= 7 ? 'bg-yellow-500/15 text-yellow-400' :
+              'bg-red-500/15 text-red-400'
+            }`}>
               {r.score}
-            </span>
+            </div>
             <div>
-              <p className="text-white text-sm">{r.clientName || 'Клиент'}</p>
-              {r.employeeName && (
-                <p className="text-zinc-500 text-xs">
-                  {r.employeeName}
-                  {r.employeePosition && ` (${POSITION_LABELS[r.employeePosition as EmployeePosition] || r.employeePosition})`}
-                </p>
-              )}
+              <p className="text-white text-sm font-medium">{r.clientName || 'Клиент'}</p>
+              <p className="text-zinc-500 text-xs">
+                {stageName(r.stage)}
+                {r.employeeName && ` · ${r.employeeName}`}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -190,17 +773,15 @@ function ResponseCard({ r }: { r: NpsResponseItem }) {
           </div>
         </div>
         {r.comment && (
-          <p className="text-zinc-400 text-sm mt-1 ml-11">&laquo;{r.comment}&raquo;</p>
+          <p className="text-zinc-400 text-sm mt-1 ml-[52px]">&laquo;{r.comment}&raquo;</p>
         )}
       </button>
 
       {expanded && (
-        <div className="ml-11 mt-3 space-y-2 border-l-2 border-zinc-700 pl-4">
+        <div className="ml-[52px] mt-3 space-y-2 border-l-2 border-zinc-700 pl-4">
           {answerEntries.map(([key, value]) => (
             <div key={key}>
-              <p className="text-zinc-400 text-xs leading-relaxed">
-                {getQuestionLabel(r.stage, key)}
-              </p>
+              <p className="text-zinc-400 text-xs">{getQuestionLabel(r.stage, key)}</p>
               {typeof value === 'number' ? (
                 <div className="flex items-center gap-2 mt-0.5">
                   <div className="h-1.5 bg-zinc-800 rounded-full flex-1 max-w-48 overflow-hidden">
@@ -222,167 +803,149 @@ function ResponseCard({ r }: { r: NpsResponseItem }) {
   );
 }
 
-// --- NPS Gauge ---
-function NpsGauge({ score }: { score: number }) {
-  const normalizedScore = Math.max(-100, Math.min(100, score));
-  const percentage = ((normalizedScore + 100) / 200) * 100;
-  const data = [{ value: percentage, fill: normalizedScore >= 50 ? COLORS.green : normalizedScore >= 0 ? COLORS.yellow : COLORS.red }];
+// ============================================================================
+// MAIN DASHBOARD
+// ============================================================================
 
-  return (
-    <div className="relative w-full h-40">
-      <ResponsiveContainer>
-        <RadialBarChart
-          cx="50%" cy="80%"
-          innerRadius="60%" outerRadius="90%"
-          startAngle={180} endAngle={0}
-          barSize={12}
-          data={data}
-        >
-          <RadialBar
-            background={{ fill: COLORS.zinc }}
-            dataKey="value"
-            cornerRadius={6}
-          />
-        </RadialBarChart>
-      </ResponsiveContainer>
-      <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
-        <span className={`text-4xl font-bold ${npsColor(score)}`}>{score}</span>
-        <span className="text-zinc-500 text-xs">NPS Score</span>
-      </div>
-    </div>
-  );
-}
+export default function NpsDashboard({ responses: realResponses, totalClients }: Props) {
+  const [period, setPeriod] = useState<Period>('all');
+  const [showDemo, setShowDemo] = useState(true);
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'stages' | 'employees' | 'responses'>('overview');
 
-// --- Distribution Pie ---
-function DistributionPie({ promoters, passives, detractors }: { promoters: number; passives: number; detractors: number }) {
-  const data = [
-    { name: 'Промоутеры (9-10)', value: promoters, fill: COLORS.green },
-    { name: 'Нейтральные (7-8)', value: passives, fill: COLORS.yellow },
-    { name: 'Критики (0-6)', value: detractors, fill: COLORS.red },
-  ].filter(d => d.value > 0);
-
-  if (data.length === 0) return <div className="h-48 flex items-center justify-center text-zinc-500">Нет данных</div>;
-
-  return (
-    <div className="h-48">
-      <ResponsiveContainer>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%" cy="50%"
-            innerRadius={45}
-            outerRadius={70}
-            paddingAngle={3}
-            dataKey="value"
-            strokeWidth={0}
-          >
-            {data.map((entry, i) => (
-              <Cell key={i} fill={entry.fill} />
-            ))}
-          </Pie>
-          <Tooltip
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const d = payload[0];
-              return (
-                <div className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 shadow-xl">
-                  <p className="text-zinc-300 text-xs">{d.name}</p>
-                  <p className="text-white font-bold">{String(d.value)}</p>
-                </div>
-              );
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-export default function NpsDashboard({ kpi, byStage, byEmployee, responses }: Props) {
-  const [selectedStage, setSelectedStage] = useState<number | null>(null);
-  const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
-
-  const stageResponses = selectedStage !== null
-    ? responses.filter((r) => r.stage === selectedStage)
-    : [];
-
-  const employeeResponses = selectedEmployee !== null
-    ? responses.filter((r) => r.employeeName === selectedEmployee)
-    : [];
-
-  const passives = kpi.totalResponses - kpi.promoters - kpi.detractors;
-
-  // Stage chart data
-  const stageChartData = useMemo(() =>
-    byStage.map((s) => ({
-      name: stageShortName(s.stage),
-      fullName: stageName(s.stage),
-      score: s.avgScore,
-      count: s.count,
-      fill: s.avgScore >= 8 ? COLORS.green : s.avgScore >= 6 ? COLORS.yellow : COLORS.red,
-    })),
-    [byStage]
+  // Merge real + demo data
+  const demoData = useMemo(() => generateDemoData(), []);
+  const allResponses = useMemo(() =>
+    showDemo ? [...realResponses, ...demoData] : realResponses,
+    [realResponses, demoData, showDemo]
   );
 
-  // Trend data (responses over time by week)
-  const trendData = useMemo(() => {
-    if (responses.length === 0) return [];
-    const weekMap: Record<string, { count: number; totalScore: number; label: string }> = {};
-    for (const r of responses) {
-      const d = new Date(r.createdAt);
-      const weekStart = new Date(d);
-      weekStart.setDate(d.getDate() - d.getDay());
-      const key = weekStart.toISOString().split('T')[0];
-      const label = weekStart.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-      if (!weekMap[key]) weekMap[key] = { count: 0, totalScore: 0, label };
-      weekMap[key].count++;
-      weekMap[key].totalScore += r.score;
+  // Filter by period
+  const filtered = useMemo(() => filterByPeriod(allResponses, period), [allResponses, period]);
+
+  // Previous period for trend comparison
+  const prevFiltered = useMemo(() => {
+    if (period === 'all') return [];
+    const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+    const cutoff = Date.now() - days * 86400000;
+    const prevCutoff = cutoff - days * 86400000;
+    return allResponses.filter((r) => {
+      const t = new Date(r.createdAt).getTime();
+      return t >= prevCutoff && t < cutoff;
+    });
+  }, [allResponses, period]);
+
+  // KPI calculations
+  const kpi = useMemo(() => calcNps(filtered), [filtered]);
+  const prevKpi = useMemo(() => calcNps(prevFiltered), [prevFiltered]);
+  const npsTrend = prevKpi.total > 0 ? { value: kpi.npsScore - prevKpi.npsScore, label: 'vs пред.' } : null;
+
+  // Response rate
+  const responseRate = useMemo(() => {
+    const clients = showDemo ? totalClients + 16 : totalClients;
+    const uniqueClients = new Set(filtered.map((r) => r.clientId || r.clientName)).size;
+    return clients > 0 ? Math.round((uniqueClients / clients) * 100) : 0;
+  }, [filtered, totalClients, showDemo]);
+
+  // Revenue at risk (demo: avg 5M per project, detractors' projects)
+  const revenueAtRisk = useMemo(() => {
+    const detractorClients = new Set(filtered.filter((r) => r.score <= 6).map((r) => r.clientId || r.clientName));
+    const avgProjectCost = 5_200_000; // 5.2M demo
+    return detractorClients.size * avgProjectCost;
+  }, [filtered]);
+
+  // Worst stage
+  const worstStage = useMemo(() => {
+    const map: Record<number, { total: number; count: number }> = {};
+    for (const r of filtered) {
+      if (!map[r.stage]) map[r.stage] = { total: 0, count: 0 };
+      map[r.stage].total += r.score;
+      map[r.stage].count++;
     }
-    return Object.entries(weekMap)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-12)
-      .map(([, w]) => ({
-        name: w.label,
-        avg: Math.round((w.totalScore / w.count) * 10) / 10,
-        count: w.count,
-      }));
-  }, [responses]);
+    let worst: { stage: number; avg: number } | null = null;
+    for (const [stage, s] of Object.entries(map)) {
+      const avg = s.total / s.count;
+      if (!worst || avg < worst.avg) worst = { stage: Number(stage), avg: Math.round(avg * 10) / 10 };
+    }
+    return worst;
+  }, [filtered]);
 
-  // Employee ranking for horizontal bars
-  const employeeChartData = useMemo(() =>
-    byEmployee.slice(0, 8).map((e) => ({
-      name: e.name.split(' ').slice(0, 2).join(' '),
-      score: e.avgScore,
-      count: e.count,
-      fill: e.avgScore >= 8 ? COLORS.green : e.avgScore >= 6 ? COLORS.yellow : COLORS.red,
-    })),
-    [byEmployee]
-  );
+  const tabs = [
+    { key: 'overview' as const, label: 'Обзор', icon: Activity },
+    { key: 'stages' as const, label: 'Этапы', icon: BarChart3 },
+    { key: 'employees' as const, label: 'Сотрудники', icon: Users },
+    { key: 'responses' as const, label: 'Ответы', icon: MessageCircleWarning },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">NPS Аналитика</h1>
-        <span className="text-zinc-500 text-sm">{kpi.totalResponses} ответов</span>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">NPS Аналитика</h1>
+          <p className="text-zinc-500 text-sm mt-0.5">{kpi.total} ответов · Обновлено сейчас</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Demo toggle */}
+          <button
+            onClick={() => setShowDemo(!showDemo)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              showDemo ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+            }`}
+          >
+            <Zap className="w-3 h-3" />
+            Demo
+          </button>
+          {/* Period filter */}
+          <div className="flex bg-zinc-900 rounded-xl border border-zinc-800 p-1">
+            {(['7d', '30d', '90d', 'all'] as Period[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  period === p ? 'bg-white/10 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {PERIOD_LABELS[p]}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-zinc-900 rounded-xl border border-zinc-800 p-1">
+        {tabs.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setSelectedTab(key)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
+              selectedTab === key ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KpiCard
           icon={TrendingUp}
           label="NPS Score"
           value={kpi.npsScore}
-          sub={`${kpi.promoters} промоутеров / ${kpi.detractors} критиков`}
+          sub={`${kpi.promoters} пром. / ${kpi.detractors} крит.`}
+          trend={npsTrend}
           colorClass={npsColor(kpi.npsScore)}
-          bgClass={npsBg(kpi.npsScore)}
+          bgClass={npsBgGradient(kpi.npsScore)}
         />
         <KpiCard
-          icon={Users}
-          label="Всего ответов"
-          value={kpi.totalResponses}
-          sub={`${kpi.promoters} / ${passives} / ${kpi.detractors}`}
-          colorClass="text-white"
-          bgClass="bg-zinc-900 border-zinc-800"
+          icon={Activity}
+          label="Response Rate"
+          value={`${responseRate}%`}
+          sub={`${kpi.total} из ${showDemo ? totalClients + 16 : totalClients} клиентов`}
+          colorClass={responseRate >= 60 ? 'text-green-400' : responseRate >= 30 ? 'text-yellow-400' : 'text-red-400'}
+          bgClass="from-zinc-900 to-zinc-900 border-zinc-800"
         />
         <KpiCard
           icon={Star}
@@ -390,261 +953,216 @@ export default function NpsDashboard({ kpi, byStage, byEmployee, responses }: Pr
           value={kpi.avgScore}
           sub="из 10"
           colorClass={scoreColor(kpi.avgScore)}
-          bgClass={scoreBg(kpi.avgScore)}
+          bgClass={kpi.avgScore >= 8 ? 'from-green-500/10 to-green-500/5 border-green-500/20' : kpi.avgScore >= 6 ? 'from-yellow-500/10 to-yellow-500/5 border-yellow-500/20' : 'from-red-500/10 to-red-500/5 border-red-500/20'}
+        />
+        <KpiCard
+          icon={DollarSign}
+          label="Выручка под угрозой"
+          value={`${(revenueAtRisk / 1_000_000).toFixed(1)}M ₽`}
+          sub={`${new Set(filtered.filter((r) => r.score <= 6).map((r) => r.clientId || r.clientName)).size} детракторов`}
+          colorClass="text-red-400"
+          bgClass="from-red-500/10 to-red-500/5 border-red-500/20"
         />
         <KpiCard
           icon={AlertTriangle}
           label="Проблемный этап"
-          value={kpi.worstStage ? stageName(kpi.worstStage.stage) : '—'}
-          sub={kpi.worstStage ? `Ср. оценка: ${kpi.worstStage.avgScore}` : null}
-          colorClass={kpi.worstStage ? 'text-red-400 text-xl' : 'text-zinc-500'}
-          bgClass={kpi.worstStage ? 'bg-red-500/10 border-red-500/20' : 'bg-zinc-900 border-zinc-800'}
+          value={worstStage ? stageName(worstStage.stage) : '—'}
+          sub={worstStage ? `Ср. ${worstStage.avg} из 10` : null}
+          colorClass={worstStage ? 'text-red-400 text-lg' : 'text-zinc-500'}
+          bgClass="from-zinc-900 to-zinc-900 border-zinc-800"
         />
       </div>
 
-      {/* Charts row 1: NPS Gauge + Distribution + Trend */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* NPS Gauge */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-5">
-          <h3 className="text-zinc-400 text-sm mb-2">NPS Score</h3>
-          <NpsGauge score={kpi.npsScore} />
-          <div className="flex justify-center gap-4 mt-2">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-zinc-400 text-xs">Промоутеры {kpi.promoters}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-yellow-500" />
-              <span className="text-zinc-400 text-xs">Нейтральные {passives}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span className="text-zinc-400 text-xs">Критики {kpi.detractors}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Distribution */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-5">
-          <h3 className="text-zinc-400 text-sm mb-2">Распределение оценок</h3>
-          <DistributionPie promoters={kpi.promoters} passives={passives} detractors={kpi.detractors} />
-          <div className="flex justify-center gap-4 mt-2">
-            <div className="text-center">
-              <p className="text-green-400 font-bold text-lg">{kpi.totalResponses > 0 ? Math.round((kpi.promoters / kpi.totalResponses) * 100) : 0}%</p>
-              <p className="text-zinc-500 text-xs">9-10</p>
-            </div>
-            <div className="text-center">
-              <p className="text-yellow-400 font-bold text-lg">{kpi.totalResponses > 0 ? Math.round((passives / kpi.totalResponses) * 100) : 0}%</p>
-              <p className="text-zinc-500 text-xs">7-8</p>
-            </div>
-            <div className="text-center">
-              <p className="text-red-400 font-bold text-lg">{kpi.totalResponses > 0 ? Math.round((kpi.detractors / kpi.totalResponses) * 100) : 0}%</p>
-              <p className="text-zinc-500 text-xs">0-6</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Trend */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-5">
-          <h3 className="text-zinc-400 text-sm mb-4">Динамика средней оценки</h3>
-          {trendData.length > 1 ? (
-            <div className="h-52">
-              <ResponsiveContainer>
-                <AreaChart data={trendData}>
-                  <defs>
-                    <linearGradient id="gradientGreen" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={COLORS.green} stopOpacity={0.3} />
-                      <stop offset="100%" stopColor={COLORS.green} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                  <XAxis dataKey="name" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[0, 10]} tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} width={25} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="avg" stroke={COLORS.green} fill="url(#gradientGreen)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-52 flex items-center justify-center text-zinc-500 text-sm">
-              Недостаточно данных для графика
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Charts row 2: By Stage + By Employee */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Stage bar chart */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-medium flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-zinc-400" /> Оценки по этапам
-            </h3>
-          </div>
-          {stageChartData.length > 0 ? (
-            <div className="h-64">
-              <ResponsiveContainer>
-                <BarChart data={stageChartData} layout="vertical" margin={{ left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-                  <XAxis type="number" domain={[0, 10]} tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fill: '#a1a1aa', fontSize: 11 }} axisLine={false} tickLine={false} width={90} />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const d = payload[0].payload;
-                      return (
-                        <div className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 shadow-xl">
-                          <p className="text-zinc-300 text-xs">{d.fullName}</p>
-                          <p className="text-white font-bold">Оценка: {d.score}</p>
-                          <p className="text-zinc-400 text-xs">{d.count} ответов</p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Bar dataKey="score" radius={[0, 4, 4, 0]} barSize={16}>
-                    {stageChartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} fillOpacity={0.8} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-64 flex items-center justify-center text-zinc-500">Нет данных</div>
-          )}
-        </div>
-
-        {/* Employee ranking */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-medium flex items-center gap-2">
-              <Users className="w-4 h-4 text-zinc-400" /> Рейтинг сотрудников
-            </h3>
-          </div>
-          {employeeChartData.length > 0 ? (
-            <div className="space-y-3">
-              {employeeChartData.map((emp, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setSelectedEmployee(selectedEmployee === emp.name ? null : emp.name);
-                    setSelectedStage(null);
-                  }}
-                  className={`w-full text-left ${selectedEmployee === emp.name ? 'opacity-100' : 'opacity-80 hover:opacity-100'} transition-opacity`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-zinc-300 text-sm">{emp.name}</span>
-                    <span className={`text-sm font-bold ${scoreColor(emp.score)}`}>{emp.score}</span>
-                  </div>
-                  <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${(emp.score / 10) * 100}%`,
-                        backgroundColor: emp.fill,
-                        opacity: selectedEmployee === emp.name ? 1 : 0.7,
-                      }}
-                    />
-                  </div>
-                  <p className="text-zinc-600 text-xs mt-0.5">{emp.count} оценок</p>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="h-64 flex items-center justify-center text-zinc-500">Нет данных</div>
-          )}
-        </div>
-      </div>
-
-      {/* Clickable stages list */}
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-        <div className="px-5 py-4 border-b border-zinc-800">
-          <h2 className="text-white font-medium">Детализация по этапам</h2>
-        </div>
-        {byStage.length === 0 ? (
-          <div className="px-5 py-8 text-center text-zinc-500">Нет данных</div>
-        ) : (
-          <div className="divide-y divide-zinc-800">
-            {byStage.map((s) => (
-              <button
-                key={s.stage}
-                onClick={() => {
-                  setSelectedStage(selectedStage === s.stage ? null : s.stage);
-                  setSelectedEmployee(null);
-                }}
-                className={`w-full px-5 py-3 flex items-center justify-between hover:bg-zinc-800/50 transition-colors ${
-                  selectedStage === s.stage ? 'bg-zinc-800' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {selectedStage === s.stage
-                    ? <ChevronDown className="w-4 h-4 text-zinc-400" />
-                    : <ChevronRight className="w-4 h-4 text-zinc-600" />
-                  }
-                  <div className="text-left">
-                    <p className="text-white text-sm">{stageName(s.stage)}</p>
-                    <p className="text-zinc-500 text-xs">{s.count} ответов</p>
-                  </div>
+      {/* ===================== TAB: OVERVIEW ===================== */}
+      {selectedTab === 'overview' && (
+        <>
+          {/* Row 1: Gauge + Distribution + Histogram */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+              <h3 className="text-zinc-400 text-sm font-medium mb-2">NPS Gauge</h3>
+              <NpsGauge score={kpi.npsScore} />
+              <div className="flex justify-center gap-4 mt-3">
+                <div className="text-center">
+                  <p className="text-green-400 font-bold text-xl">{kpi.total > 0 ? Math.round((kpi.promoters / kpi.total) * 100) : 0}%</p>
+                  <p className="text-zinc-600 text-[10px]">ПРОМОУТЕРЫ</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-24 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${(s.avgScore / 10) * 100}%`,
-                        backgroundColor: s.avgScore >= 8 ? COLORS.green : s.avgScore >= 6 ? COLORS.yellow : COLORS.red,
-                      }}
-                    />
-                  </div>
-                  <span className={`text-lg font-bold min-w-[2rem] text-right ${scoreColor(s.avgScore)}`}>
-                    {s.avgScore}
-                  </span>
+                <div className="text-center">
+                  <p className="text-yellow-400 font-bold text-xl">{kpi.total > 0 ? Math.round((kpi.passives / kpi.total) * 100) : 0}%</p>
+                  <p className="text-zinc-600 text-[10px]">НЕЙТРАЛЬНЫЕ</p>
                 </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+                <div className="text-center">
+                  <p className="text-red-400 font-bold text-xl">{kpi.total > 0 ? Math.round((kpi.detractors / kpi.total) * 100) : 0}%</p>
+                  <p className="text-zinc-600 text-[10px]">КРИТИКИ</p>
+                </div>
+              </div>
+            </div>
 
-      {/* Detail panel */}
-      {(selectedStage !== null || selectedEmployee !== null) && (
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-          <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
-            <h2 className="text-white font-medium">
-              {selectedStage !== null
-                ? `Оценки: ${stageName(selectedStage)}`
-                : `Оценки: ${selectedEmployee}`
-              }
-            </h2>
-            <button
-              onClick={() => { setSelectedStage(null); setSelectedEmployee(null); }}
-              className="text-zinc-500 text-sm hover:text-white"
-            >
-              Закрыть
-            </button>
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+              <h3 className="text-zinc-400 text-sm font-medium mb-2">Распределение оценок</h3>
+              <DistributionDonut promoters={kpi.promoters} passives={kpi.passives} detractors={kpi.detractors} />
+            </div>
+
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+              <h3 className="text-zinc-400 text-sm font-medium mb-2">Гистограмма (0–10)</h3>
+              <ScoreHistogram responses={filtered} />
+            </div>
           </div>
-          <div className="divide-y divide-zinc-800">
-            {(selectedStage !== null ? stageResponses : employeeResponses).map((r) => (
-              <ResponseCard key={r.id} r={r} />
-            ))}
+
+          {/* Row 2: NPS Trend */}
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-medium flex items-center gap-2">
+                <Activity className="w-4 h-4 text-cyan-400" />
+                NPS Тренд
+              </h3>
+              <div className="flex items-center gap-3 text-xs text-zinc-500">
+                <span>Левая ось: NPS (−100…+100)</span>
+                <span>Правая: Ср. оценка (0–10)</span>
+              </div>
+            </div>
+            <NpsTrendChart responses={filtered} />
           </div>
-        </div>
+
+          {/* Row 3: Detractor panel */}
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-medium flex items-center gap-2">
+                <MessageCircleWarning className="w-4 h-4 text-red-400" />
+                Критики — Closed Loop
+              </h3>
+              <span className="text-zinc-500 text-xs">{filtered.filter((r) => r.score <= 6).length} критиков</span>
+            </div>
+            <DetractorPanel responses={filtered} />
+          </div>
+        </>
       )}
 
-      {/* Recent responses */}
-      {selectedStage === null && selectedEmployee === null && (
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-          <div className="px-5 py-4 border-b border-zinc-800">
-            <h2 className="text-white font-medium">Последние ответы</h2>
+      {/* ===================== TAB: STAGES ===================== */}
+      {selectedTab === 'stages' && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+              <h3 className="text-white font-medium flex items-center gap-2 mb-4">
+                <BarChart3 className="w-4 h-4 text-zinc-400" />
+                Распределение по этапам
+              </h3>
+              <StagesStackedChart responses={filtered} />
+              <div className="flex justify-center gap-6 mt-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-green-500/80" />
+                  <span className="text-zinc-500 text-xs">Промоутеры (9-10)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-yellow-500/80" />
+                  <span className="text-zinc-500 text-xs">Нейтральные (7-8)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-red-500/80" />
+                  <span className="text-zinc-500 text-xs">Критики (0-6)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+              <h3 className="text-white font-medium mb-4">Тепловая карта: Этапы × Сотрудники</h3>
+              <Heatmap responses={filtered} />
+              <div className="flex justify-center gap-2 mt-4">
+                {[
+                  { label: '9-10', color: 'bg-green-500/80' },
+                  { label: '7-8', color: 'bg-yellow-500/50' },
+                  { label: '4-6', color: 'bg-orange-500/50' },
+                  { label: '0-3', color: 'bg-red-500/60' },
+                ].map(({ label, color }) => (
+                  <div key={label} className="flex items-center gap-1">
+                    <div className={`w-4 h-4 rounded ${color}`} />
+                    <span className="text-zinc-500 text-[10px]">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          {responses.length === 0 ? (
-            <div className="px-5 py-8 text-center text-zinc-500">Пока нет ответов</div>
+
+          {/* Stage detail cards */}
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800">
+            <div className="px-5 py-4 border-b border-zinc-800">
+              <h3 className="text-white font-medium">NPS по каждому этапу</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-zinc-800">
+              {STAGES.map((stage) => {
+                const stageResponses = filtered.filter((r) => r.stage === stage.number);
+                const stats = calcNps(stageResponses);
+                return (
+                  <div key={stage.number} className="bg-zinc-900 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="text-zinc-300 text-sm font-medium">{stage.title}</p>
+                        <p className="text-zinc-600 text-xs">{stats.total} ответов</p>
+                      </div>
+                      {stats.total > 0 && (
+                        <span className={`text-xl font-bold ${npsColor(stats.npsScore)}`}>{stats.npsScore}</span>
+                      )}
+                    </div>
+                    {stats.total > 0 ? (
+                      <div className="flex gap-0.5 h-2 rounded-full overflow-hidden">
+                        {stats.promoters > 0 && (
+                          <div className="bg-green-500" style={{ width: `${(stats.promoters / stats.total) * 100}%` }} />
+                        )}
+                        {stats.passives > 0 && (
+                          <div className="bg-yellow-500" style={{ width: `${(stats.passives / stats.total) * 100}%` }} />
+                        )}
+                        {stats.detractors > 0 && (
+                          <div className="bg-red-500" style={{ width: `${(stats.detractors / stats.total) * 100}%` }} />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="h-2 bg-zinc-800 rounded-full" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ===================== TAB: EMPLOYEES ===================== */}
+      {selectedTab === 'employees' && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+              <h3 className="text-white font-medium flex items-center gap-2 mb-4">
+                <Users className="w-4 h-4 text-zinc-400" />
+                Рейтинг сотрудников по NPS
+              </h3>
+              <EmployeeRanking responses={filtered} />
+            </div>
+
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+              <h3 className="text-white font-medium mb-4">Тепловая карта: Сотрудники × Этапы</h3>
+              <Heatmap responses={filtered} />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ===================== TAB: RESPONSES ===================== */}
+      {selectedTab === 'responses' && (
+        <div className="bg-zinc-900 rounded-2xl border border-zinc-800">
+          <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+            <h2 className="text-white font-medium">Все ответы ({filtered.length})</h2>
+          </div>
+          {filtered.length === 0 ? (
+            <div className="px-5 py-12 text-center text-zinc-500">Нет ответов за выбранный период</div>
           ) : (
-            <div className="divide-y divide-zinc-800">
-              {responses.slice(0, 20).map((r) => (
+            <div className="divide-y divide-zinc-800/50">
+              {filtered.slice(0, 50).map((r) => (
                 <ResponseCard key={r.id} r={r} />
               ))}
+              {filtered.length > 50 && (
+                <div className="px-5 py-4 text-center text-zinc-500 text-sm">
+                  Показано 50 из {filtered.length} ответов
+                </div>
+              )}
             </div>
           )}
         </div>
