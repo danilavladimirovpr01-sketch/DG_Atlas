@@ -301,7 +301,7 @@ function KpiCard({
           <Icon className="w-4.5 h-4.5 text-zinc-400" />
         </div>
       </div>
-      <p className={`${valueClass || 'text-3xl'} font-bold tracking-tight ${colorClass} truncate`}>{value}</p>
+      <p className={`${valueClass || 'text-3xl'} font-bold tracking-tight ${colorClass}`}>{value}</p>
       <div className="flex items-center gap-2 mt-1.5">
         {sub && <p className="text-zinc-500 text-sm">{sub}</p>}
         {trend && (
@@ -1047,7 +1047,7 @@ export default function NpsDashboard({ responses: realResponses, totalClients }:
           value={worstStage ? stageName(worstStage.stage) : '—'}
           sub={worstStage ? `Ср. ${worstStage.avg} из 10` : null}
           colorClass={worstStage ? 'text-red-400' : 'text-zinc-500'}
-          valueClass="text-xl"
+          valueClass="text-base leading-tight"
           bgClass="from-zinc-900 to-zinc-900 border-zinc-800"
           info={{
             title: 'Проблемный этап',
