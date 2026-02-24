@@ -8,7 +8,7 @@ import { TMA_CATEGORIES } from '@/lib/constants/tma-features';
 import type { FeatureCategory } from '@/lib/constants/tma-features';
 import {
   ChevronDown, Bell, Star, ArrowRight, ChevronRight,
-  Clock, Camera, Trophy, Layers, TrendingUp, Smartphone,
+  Clock, Camera, Trophy, Layers, TrendingUp,
 } from 'lucide-react';
 
 /* ── Category visual config (matching landing page) ── */
@@ -81,17 +81,6 @@ const CATEGORY_STYLE: Record<FeatureCategory, {
 export default function WelcomeScreen() {
   const { profile, project } = useTma();
   const [openCategory, setOpenCategory] = useState<FeatureCategory | null>('progress');
-  const [showHomeHint, setShowHomeHint] = useState(false);
-
-  function handleAddToHome() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tg = (window as any).Telegram?.WebApp;
-    if (typeof tg?.addToHomeScreen === 'function') {
-      tg.addToHomeScreen();
-    } else {
-      setShowHomeHint(true);
-    }
-  }
 
   const currentStage = project?.current_stage ?? 0;
   const stageInfo = STAGES[currentStage];
@@ -237,54 +226,6 @@ export default function WelcomeScreen() {
           <ArrowRight className="w-5 h-5 text-[#444] shrink-0" />
         </Link>
       </div>
-
-      {/* ═══════════════ ADD TO HOME SCREEN ═══════════════ */}
-      <div className="mx-4 mb-6">
-        <button
-          onClick={handleAddToHome}
-          className="w-full flex items-center gap-4 px-5 py-4 rounded-[20px] bg-[#1a1a1a] border border-white/[0.08] active:bg-[#222] transition-colors text-left"
-          style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}
-        >
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.06] flex items-center justify-center shrink-0">
-            <Smartphone className="w-6 h-6 text-white/70" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-[15px] font-semibold tracking-tight">На главный экран</p>
-            <p className="text-[#666] text-xs leading-snug mt-0.5 font-light">
-              Быстрый доступ одним нажатием
-            </p>
-          </div>
-          <ArrowRight className="w-5 h-5 text-[#444] shrink-0" />
-        </button>
-      </div>
-
-      {/* Hint modal */}
-      {showHomeHint && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70" onClick={() => setShowHomeHint(false)}>
-          <div
-            className="w-full max-w-sm mx-4 mb-8 rounded-[24px] bg-[#1a1a1a] border border-white/[0.08] p-6"
-            style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/[0.06] flex items-center justify-center">
-                <Smartphone className="w-6 h-6 text-white/70" />
-              </div>
-              <h3 className="text-white text-lg font-bold tracking-tight">Добавить на экран</h3>
-            </div>
-            <div className="space-y-3 text-[#999] text-sm font-light leading-relaxed">
-              <p>1. Нажмите <span className="text-white font-medium">три точки</span> (меню) в правом верхнем углу Telegram</p>
-              <p>2. Выберите <span className="text-white font-medium">&laquo;Добавить на главный экран&raquo;</span></p>
-            </div>
-            <button
-              onClick={() => setShowHomeHint(false)}
-              className="w-full mt-5 py-3.5 rounded-2xl bg-white text-black text-[15px] font-semibold active:bg-[#e8e8e8] transition-colors"
-            >
-              Понятно
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ═══════════════ CATEGORY SECTIONS ═══════════════ */}
       <div className="space-y-3 px-4 pb-4">
