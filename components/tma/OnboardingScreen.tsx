@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTma } from '@/lib/tma-context';
 import { Input } from '@/components/ui/input';
 import { ArrowRight, Loader2 } from 'lucide-react';
 
-/* ── Slide-to-confirm component ── */
+/* ── Slide-to-confirm ── */
 function SlideToConfirm({
   onConfirm,
   loading,
@@ -16,142 +16,178 @@ function SlideToConfirm({
   disabled: boolean;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [dragX, setDragX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const thumbRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const startX = useRef(0);
+  const currentX = useRef(0);
   const [confirmed, setConfirmed] = useState(false);
-  const thumbSize = 56;
-  const padding = 4;
+  const [, forceRender] = useState(0);
 
-  const getMaxX = useCallback(() => {
+  const THUMB = 56;
+  const PAD = 4;
+
+  function getMax() {
     if (!trackRef.current) return 200;
-    return trackRef.current.offsetWidth - thumbSize - padding * 2;
-  }, []);
+    return trackRef.current.offsetWidth - THUMB - PAD * 2;
+  }
 
-  /* Reset on loading change */
-  useEffect(() => {
-    if (!loading) {
-      setConfirmed(false);
-      setDragX(0);
+  function updateThumb(x: number) {
+    currentX.current = Math.max(0, Math.min(x, getMax()));
+    if (thumbRef.current) {
+      thumbRef.current.style.left = `${PAD + currentX.current}px`;
+      thumbRef.current.style.transition = 'none';
     }
-  }, [loading]);
-
-  function handleStart(clientX: number) {
-    if (loading || disabled) return;
-    setIsDragging(true);
   }
 
-  function handleMove(clientX: number) {
-    if (!isDragging || !trackRef.current) return;
-    const rect = trackRef.current.getBoundingClientRect();
-    const x = clientX - rect.left - padding - thumbSize / 2;
-    const maxX = getMaxX();
-    setDragX(Math.max(0, Math.min(x, maxX)));
+  function snapBack() {
+    currentX.current = 0;
+    if (thumbRef.current) {
+      thumbRef.current.style.transition = 'left 0.4s cubic-bezier(0.32,0.72,0,1)';
+      thumbRef.current.style.left = `${PAD}px`;
+    }
   }
 
-  function handleEnd() {
-    if (!isDragging) return;
-    setIsDragging(false);
-    const maxX = getMaxX();
-    if (dragX > maxX * 0.85) {
-      setDragX(maxX);
+  function snapEnd() {
+    const max = getMax();
+    currentX.current = max;
+    if (thumbRef.current) {
+      thumbRef.current.style.transition = 'left 0.2s ease-out';
+      thumbRef.current.style.left = `${PAD + max}px`;
+    }
+  }
+
+  /* Touch events on thumb */
+  function onTouchStart(e: React.TouchEvent) {
+    if (loading || disabled || confirmed) return;
+    e.stopPropagation();
+    dragging.current = true;
+    startX.current = e.touches[0].clientX - currentX.current;
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (!dragging.current) return;
+    e.stopPropagation();
+    const x = e.touches[0].clientX - startX.current;
+    updateThumb(x);
+    forceRender((n) => n + 1);
+  }
+
+  function onTouchEnd() {
+    if (!dragging.current) return;
+    dragging.current = false;
+    if (currentX.current > getMax() * 0.75) {
+      snapEnd();
       setConfirmed(true);
       onConfirm();
     } else {
-      setDragX(0);
+      snapBack();
     }
+    forceRender((n) => n + 1);
   }
 
-  /* Touch handlers */
-  function onTouchStart(e: React.TouchEvent) {
-    handleStart(e.touches[0].clientX);
-  }
-  function onTouchMove(e: React.TouchEvent) {
-    handleMove(e.touches[0].clientX);
-  }
-  function onTouchEnd() {
-    handleEnd();
-  }
-
-  /* Mouse handlers */
+  /* Mouse events (for desktop testing) */
   function onMouseDown(e: React.MouseEvent) {
-    handleStart(e.clientX);
-  }
+    if (loading || disabled || confirmed) return;
+    e.preventDefault();
+    dragging.current = true;
+    startX.current = e.clientX - currentX.current;
 
-  useEffect(() => {
-    if (!isDragging) return;
-    function onMouseMove(e: MouseEvent) {
-      handleMove(e.clientX);
+    function onMouseMove(ev: MouseEvent) {
+      if (!dragging.current) return;
+      updateThumb(ev.clientX - startX.current);
+      forceRender((n) => n + 1);
     }
+
     function onMouseUp() {
-      handleEnd();
-    }
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    return () => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      if (currentX.current > getMax() * 0.75) {
+        snapEnd();
+        setConfirmed(true);
+        onConfirm();
+      } else {
+        snapBack();
+      }
+      forceRender((n) => n + 1);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
-    };
-  });
+    }
 
-  const progress = getMaxX() > 0 ? dragX / getMaxX() : 0;
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
+  /* Reset */
+  useEffect(() => {
+    if (!loading && !confirmed) {
+      snapBack();
+    }
+  }, [loading]);
+
+  const progress = getMax() > 0 ? currentX.current / getMax() : 0;
+  const isDisabledVisual = disabled && !loading;
 
   return (
     <div
       ref={trackRef}
-      className="relative h-16 rounded-full bg-[#1a1a1a] border border-white/[0.08] overflow-hidden select-none"
-      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.3)', padding }}
+      className="relative rounded-full overflow-hidden select-none"
+      style={{
+        height: THUMB + PAD * 2,
+        padding: PAD,
+        background: '#1a1a1a',
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        opacity: isDisabledVisual ? 0.4 : 1,
+        transition: 'opacity 0.3s',
+      }}
     >
-      {/* Animated gradient fill */}
+      {/* Label */}
       <div
-        className="absolute inset-0 rounded-full transition-opacity duration-200"
-        style={{
-          opacity: progress * 0.3,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 100%)',
-        }}
-      />
-
-      {/* Label text */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <span
-          className="text-[15px] font-medium tracking-tight transition-opacity duration-200"
-          style={{
-            color: '#555',
-            opacity: confirmed || loading ? 0 : 1 - progress * 1.5,
-          }}
-        >
-          {loading ? '' : 'Свайпните для входа'}
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        style={{ opacity: loading || confirmed ? 0 : Math.max(0, 1 - progress * 2) }}
+      >
+        <span style={{ color: '#666', fontSize: 15, fontWeight: 500, letterSpacing: '-0.01em' }}>
+          {isDisabledVisual ? 'Введите номер' : 'Свайпните для входа'}
         </span>
-        {loading && (
-          <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
-        )}
       </div>
 
-      {/* Chevron hints */}
-      {!loading && !confirmed && (
-        <div className="absolute inset-0 flex items-center pointer-events-none" style={{ paddingLeft: thumbSize + padding + 12 }}>
-          <div className="flex gap-1 items-center" style={{ opacity: Math.max(0, 0.15 - progress * 0.3) }}>
-            <ArrowRight className="w-3.5 h-3.5 text-[#444]" />
-            <ArrowRight className="w-3.5 h-3.5 text-[#333]" />
-            <ArrowRight className="w-3.5 h-3.5 text-[#222]" />
-          </div>
+      {/* Loading spinner */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
         </div>
       )}
 
-      {/* Draggable thumb */}
+      {/* Thumb */}
       {!loading && (
         <div
-          className="absolute top-1 w-[56px] h-[56px] rounded-full bg-white flex items-center justify-center cursor-grab active:cursor-grabbing z-10"
-          style={{
-            left: padding + dragX,
-            transition: isDragging ? 'none' : 'left 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-          }}
+          ref={thumbRef}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
           onMouseDown={onMouseDown}
+          style={{
+            position: 'absolute',
+            top: PAD,
+            left: PAD,
+            width: THUMB,
+            height: THUMB,
+            borderRadius: '50%',
+            background: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: disabled ? 'not-allowed' : 'grab',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+            zIndex: 10,
+            touchAction: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+          }}
         >
-          <ArrowRight className="w-6 h-6 text-black" strokeWidth={2.5} />
+          <ArrowRight
+            style={{ width: 24, height: 24, color: '#000', strokeWidth: 2.5 }}
+          />
         </div>
       )}
     </div>
