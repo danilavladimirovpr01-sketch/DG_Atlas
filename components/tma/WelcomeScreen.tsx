@@ -6,7 +6,7 @@ import { useTma } from '@/lib/tma-context';
 import { STAGES } from '@/lib/constants/stages';
 import { TMA_CATEGORIES } from '@/lib/constants/tma-features';
 import type { FeatureCategory } from '@/lib/constants/tma-features';
-import { ChevronDown, Bell } from 'lucide-react';
+import { ChevronDown, Bell, Star, ArrowRight } from 'lucide-react';
 
 export default function WelcomeScreen() {
   const { profile, project } = useTma();
@@ -81,6 +81,25 @@ export default function WelcomeScreen() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Ваш голос — NPS feedback block */}
+      <div className="mx-4 mb-5">
+        <Link
+          href="/tma/feedback"
+          className="flex items-center gap-4 px-5 py-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 active:bg-zinc-800/70 transition-colors"
+        >
+          <div className="w-11 h-11 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+            <Star className="w-5 h-5 text-amber-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-base font-semibold">Ваш голос</p>
+            <p className="text-zinc-500 text-xs leading-snug">
+              Оцените качество на каждом этапе строительства
+            </p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-zinc-600 shrink-0" />
+        </Link>
       </div>
 
       {/* Category accordion menu */}
