@@ -1,8 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Inter } from 'next/font/google';
 import type { Project, Profile } from '@/types';
 import { TmaContext, type TmaContextType } from '@/lib/tma-context';
+
+const inter = Inter({
+  subsets: ['cyrillic', 'latin'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-inter',
+});
 
 export default function TmaLayout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -59,7 +66,8 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
     <TmaContext.Provider
       value={{ profile, project, telegramUser, isLoading, setProfile, setProject }}
     >
-      <div className="min-h-screen bg-black text-white">
+      <div className={`${inter.variable} font-sans min-h-screen bg-black text-white`}
+           style={{ fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif' }}>
         {children}
       </div>
     </TmaContext.Provider>
