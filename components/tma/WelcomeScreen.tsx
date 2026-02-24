@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTma } from '@/lib/tma-context';
 import { STAGES } from '@/lib/constants/stages';
@@ -8,7 +8,7 @@ import { TMA_CATEGORIES } from '@/lib/constants/tma-features';
 import type { FeatureCategory } from '@/lib/constants/tma-features';
 import {
   ChevronDown, Bell, Star, ArrowRight, ChevronRight,
-  Clock, Camera, Trophy, Layers, TrendingUp,
+  Clock, Camera, Trophy, Layers, TrendingUp, Smartphone,
 } from 'lucide-react';
 
 /* ── Category visual config (matching landing page) ── */
@@ -81,6 +81,22 @@ const CATEGORY_STYLE: Record<FeatureCategory, {
 export default function WelcomeScreen() {
   const { profile, project } = useTma();
   const [openCategory, setOpenCategory] = useState<FeatureCategory | null>('progress');
+  const [canAddToHome, setCanAddToHome] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tg = (window as any).Telegram?.WebApp;
+    // Telegram Bot API 8.0+ supports addToHomeScreen
+    if (tg && typeof tg.addToHomeScreen === 'function') {
+      setCanAddToHome(true);
+    }
+  }, []);
+
+  function handleAddToHome() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tg = (window as any).Telegram?.WebApp;
+    tg?.addToHomeScreen?.();
+  }
 
   const currentStage = project?.current_stage ?? 0;
   const stageInfo = STAGES[currentStage];
@@ -226,6 +242,28 @@ export default function WelcomeScreen() {
           <ArrowRight className="w-5 h-5 text-[#444] shrink-0" />
         </Link>
       </div>
+
+      {/* ═══════════════ ADD TO HOME SCREEN ═══════════════ */}
+      {canAddToHome && (
+        <div className="mx-4 mb-6">
+          <button
+            onClick={handleAddToHome}
+            className="w-full flex items-center gap-4 px-5 py-4 rounded-[20px] bg-[#1a1a1a] border border-white/[0.08] active:bg-[#222] transition-colors text-left"
+            style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.06] flex items-center justify-center shrink-0">
+              <Smartphone className="w-6 h-6 text-white/70" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-[15px] font-semibold tracking-tight">На главный экран</p>
+              <p className="text-[#666] text-xs leading-snug mt-0.5 font-light">
+                Быстрый доступ к проекту одним нажатием
+              </p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-[#444] shrink-0" />
+          </button>
+        </div>
+      )}
 
       {/* ═══════════════ CATEGORY SECTIONS ═══════════════ */}
       <div className="space-y-3 px-4 pb-4">
