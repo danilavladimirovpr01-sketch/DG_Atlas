@@ -28,11 +28,13 @@ export async function POST(request: NextRequest) {
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id, phone, full_name')
-      .eq('telegram_id', telegramUser.id)
+      .eq('telegram_id', String(telegramUser.id))
       .single();
 
     if (existingProfile && existingProfile.phone) {
-      // Sync name from Telegram
+      // Auto-login: user already onboarded with this Telegram account
+
+      // Sync name from Telegram if needed
       const tgName = [telegramUser.firstName, telegramUser.lastName].filter(Boolean).join(' ');
       if (tgName && existingProfile.full_name !== tgName) {
         await supabase
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
         existingProfile.full_name = tgName;
       }
 
-      // Check if they have a project
+      // Fetch project
       const { data: project } = await supabase
         .from('projects')
         .select('*')
@@ -57,16 +59,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (existingProfile && !existingProfile.phone) {
-      // Profile exists but not onboarded — need phone
-      return NextResponse.json({
-        status: 'needs_onboarding',
-        profileId: existingProfile.id,
-        telegramUser,
-      });
-    }
-
-    // New user — needs onboarding
+    // Not yet onboarded — needs to enter phone number
     return NextResponse.json({
       status: 'needs_onboarding',
       telegramUser,

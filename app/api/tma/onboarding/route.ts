@@ -12,15 +12,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!telegramId) {
+      return NextResponse.json(
+        { error: 'Telegram ID обязателен' },
+        { status: 400 }
+      );
+    }
+
     // Normalize phone: remove spaces, dashes
     const normalizedPhone = phone.replace(/[\s\-()]/g, '');
 
     const supabase = createServiceRoleClient();
 
-    // Find project by client's phone number
+    // Check if this telegram_id is already linked to another profile
+    const { data: alreadyLinked } = await supabase
+      .from('profiles')
+      .select('id, phone')
+      .eq('telegram_id', String(telegramId))
+      .single();
+
+    if (alreadyLinked && alreadyLinked.phone && alreadyLinked.phone !== normalizedPhone) {
+      // This Telegram account is already linked to a different phone
+      return NextResponse.json(
+        { error: 'Этот Telegram аккаунт уже привязан к другому номеру' },
+        { status: 400 }
+      );
+    }
+
+    // Find profile by phone number
     const { data: existingProfile } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, telegram_id, full_name')
       .eq('phone', normalizedPhone)
       .single();
 
@@ -28,22 +50,40 @@ export async function POST(request: NextRequest) {
     let profileId: string;
 
     if (existingProfile) {
-      // Existing client — update with telegram_id
+      // Profile exists with this phone
+
+      // Check if this profile is already linked to a DIFFERENT Telegram account
+      if (
+        existingProfile.telegram_id &&
+        String(existingProfile.telegram_id) !== String(telegramId)
+      ) {
+        return NextResponse.json(
+          { error: 'Этот номер уже привязан к другому Telegram аккаунту' },
+          { status: 400 }
+        );
+      }
+
+      // Link telegram_id to this profile
       profileId = existingProfile.id;
+      const updates: Record<string, unknown> = {
+        telegram_id: String(telegramId),
+      };
+      // Only update name if profile doesn't have one yet
+      if (!existingProfile.full_name || existingProfile.full_name === 'Новый клиент') {
+        updates.full_name = fullName || 'Новый клиент';
+      }
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          telegram_id: telegramId,
-          full_name: fullName || undefined,
-        })
+        .update(updates)
         .eq('id', profileId);
 
       if (updateError) {
         console.error('Profile update error:', updateError);
-        return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
+        return NextResponse.json({ error: 'Ошибка обновления профиля' }, { status: 500 });
       }
     } else {
-      // New client — create auth user + profile + default project
+      // No profile with this phone — create new
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: `tg_${normalizedPhone.replace('+', '')}@dgatlas.app`,
         password: `tg_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -62,7 +102,7 @@ export async function POST(request: NextRequest) {
         full_name: fullName || 'Новый клиент',
         role: 'client',
         phone: normalizedPhone,
-        telegram_id: telegramId,
+        telegram_id: String(telegramId),
       });
 
       if (profileError) {
@@ -79,6 +119,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Fetch full profile from DB (with actual name)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, phone, full_name')
+      .eq('id', profileId)
+      .single();
+
     // Fetch project
     const { data: project } = await supabase
       .from('projects')
@@ -88,7 +135,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       status: 'authenticated',
-      profile: { id: profileId, full_name: fullName || 'Новый клиент' },
+      profile,
       project,
     });
   } catch (error) {
