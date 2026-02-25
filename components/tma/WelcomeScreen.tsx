@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useTma } from '@/lib/tma-context';
 import { STAGES } from '@/lib/constants/stages';
