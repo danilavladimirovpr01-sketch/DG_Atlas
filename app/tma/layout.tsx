@@ -16,52 +16,21 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project | null>(null);
   const [telegramUser, setTelegramUser] = useState<TmaContextType['telegramUser']>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [safeTop, setSafeTop] = useState(0);
 
   useEffect(() => {
-    // Expand TMA to full screen
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tg = (window as any).Telegram?.WebApp;
     if (tg) {
-      tg.expand();
       tg.ready();
+      tg.expand();
 
-      // Request fullscreen if available (Bot API 8.0+)
-      if (typeof tg.requestFullscreen === 'function') {
-        try { tg.requestFullscreen(); } catch {}
+      // Make TG header blend with our black background
+      if (typeof tg.setHeaderColor === 'function') {
+        tg.setHeaderColor('#000000');
       }
-
-      // Calculate safe area: device notch + Telegram header
-      const calcSafe = () => {
-        const deviceTop = tg.safeAreaInset?.top ?? 0;
-        const contentTop = tg.contentSafeAreaInset?.top ?? 0;
-        let total = deviceTop + contentTop;
-
-        // Fallback: if API returns 0 but we're in fullscreen/expanded,
-        // use headerColor presence or screen check to estimate safe area
-        if (total === 0 && tg.isExpanded) {
-          // iPhone with notch/dynamic island: ~54px, without: ~20px
-          const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-          if (isIOS) {
-            // Check for notch: screen height > 800 means modern iPhone with notch
-            total = window.screen.height > 800 ? 54 : 20;
-          }
-        }
-
-        if (total > 0) {
-          setSafeTop(total);
-          document.documentElement.style.setProperty('--tg-safe-top', `${total}px`);
-        }
-      };
-
-      // Run after a small delay to let TG settle
-      calcSafe();
-      setTimeout(calcSafe, 300);
-
-      // Listen for viewport/safe-area changes
-      tg.onEvent?.('contentSafeAreaChanged', calcSafe);
-      tg.onEvent?.('safeAreaChanged', calcSafe);
-      tg.onEvent?.('viewportChanged', calcSafe);
+      if (typeof tg.setBackgroundColor === 'function') {
+        tg.setBackgroundColor('#000000');
+      }
     }
 
     async function init() {
@@ -107,7 +76,6 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
       <div className={`${inter.variable} font-sans min-h-screen bg-black text-white`}
            style={{
              fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
-             paddingTop: safeTop,
            }}>
         {children}
       </div>
