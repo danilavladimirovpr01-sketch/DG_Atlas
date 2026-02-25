@@ -269,15 +269,35 @@ function CompareMockup() {
    PHOTOS — Фото каждый день
    ══════════════════════════════════════════════ */
 function PhotosMockup() {
+  const todayPhotos = [
+    '/stages/05-fundament-steny.jpg',
+    '/stages/06-krysha.jpg',
+    '/stages/07-teplyj-kontur.jpg',
+    '/stages/08-fasad.jpg',
+    '/stages/10-otdelka.jpg',
+    '/stages/11-kommunikacii.jpg',
+  ];
+  const yesterdayPhotos = [
+    '/stages/03-proektirovanie.jpg',
+    '/stages/04-smeta.jpg',
+    '/stages/12-landshaft.jpg',
+  ];
+  const olderPhotos = [
+    '/stages/00-mechta.jpg',
+    '/stages/01-uchastok.jpg',
+    '/stages/02-kompaniya.jpg',
+    '/stages/13-zaezd.jpg',
+  ];
+
   return (
     <div className="space-y-5">
       {/* Today */}
       <div>
         <p className="text-white text-xs font-bold uppercase tracking-wider mb-3 px-1">Сегодня · 25 февраля</p>
         <div className="grid grid-cols-3 gap-1.5">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="aspect-square rounded-xl bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] border border-white/[0.06] flex items-center justify-center overflow-hidden">
-              <Camera className="w-6 h-6 text-white/15" />
+          {todayPhotos.map((src, i) => (
+            <div key={i} className="aspect-square rounded-xl border border-white/[0.06] overflow-hidden">
+              <img src={src} alt="" className="w-full h-full object-cover" />
             </div>
           ))}
         </div>
@@ -287,9 +307,21 @@ function PhotosMockup() {
       <div>
         <p className="text-[#666] text-xs font-bold uppercase tracking-wider mb-3 px-1">Вчера · 24 февраля</p>
         <div className="grid grid-cols-3 gap-1.5">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="aspect-square rounded-xl bg-gradient-to-br from-[#222] to-[#161616] border border-white/[0.04] flex items-center justify-center">
-              <Camera className="w-6 h-6 text-white/10" />
+          {yesterdayPhotos.map((src, i) => (
+            <div key={i} className="aspect-square rounded-xl border border-white/[0.04] overflow-hidden">
+              <img src={src} alt="" className="w-full h-full object-cover" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Older */}
+      <div>
+        <p className="text-[#555] text-xs font-bold uppercase tracking-wider mb-3 px-1">22 февраля</p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {olderPhotos.map((src, i) => (
+            <div key={i} className="aspect-square rounded-xl border border-white/[0.04] overflow-hidden opacity-80">
+              <img src={src} alt="" className="w-full h-full object-cover" />
             </div>
           ))}
         </div>
@@ -314,11 +346,21 @@ function PhotosMockup() {
    TIMELAPSE — Таймлапс стройки
    ══════════════════════════════════════════════ */
 function TimelapseMockup() {
+  const stages = [
+    { label: 'Фундамент', src: '/stages/05-fundament-steny.jpg' },
+    { label: 'Стены', src: '/stages/07-teplyj-kontur.jpg' },
+    { label: 'Крыша', src: '/stages/06-krysha.jpg' },
+    { label: 'Фасад', src: '/stages/08-fasad.jpg' },
+    { label: 'Отделка', src: '/stages/10-otdelka.jpg' },
+    { label: 'Ландшафт', src: '/stages/12-landshaft.jpg' },
+  ];
+
   return (
     <div className="space-y-5">
-      {/* Video player */}
-      <div className="relative aspect-video rounded-2xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-white/[0.08] overflow-hidden" style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.4)' }}>
-        <div className="absolute inset-0 flex items-center justify-center">
+      {/* Video player with real photo as poster */}
+      <div className="relative aspect-video rounded-2xl border border-white/[0.08] overflow-hidden" style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.4)' }}>
+        <img src="/stages/09-dizajn-proekt.jpg" alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
             <Play className="w-7 h-7 text-white ml-1" />
           </div>
@@ -337,14 +379,14 @@ function TimelapseMockup() {
 
       <p className="text-[#666] text-sm text-center font-light">247 фото → 30 секунд видео</p>
 
-      {/* Stages preview */}
+      {/* Stages preview with real photos */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-        {['Фундамент', 'Стены', 'Крыша', 'Фасад', 'Отделка'].map((stage, i) => (
+        {stages.map((stage, i) => (
           <div key={i} className="flex-shrink-0 w-20 rounded-xl bg-[#1a1a1a] border border-white/[0.06] p-2.5 text-center">
-            <div className="w-full aspect-square rounded-lg bg-[#0d0d0d] mb-1.5 flex items-center justify-center">
-              <Camera className="w-4 h-4 text-white/15" />
+            <div className="w-full aspect-square rounded-lg overflow-hidden mb-1.5">
+              <img src={stage.src} alt="" className="w-full h-full object-cover" />
             </div>
-            <p className="text-[#999] text-[10px] truncate">{stage}</p>
+            <p className="text-[#999] text-[10px] truncate">{stage.label}</p>
           </div>
         ))}
       </div>
