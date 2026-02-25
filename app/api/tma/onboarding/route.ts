@@ -12,31 +12,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!telegramId) {
-      return NextResponse.json(
-        { error: 'Telegram ID обязателен' },
-        { status: 400 }
-      );
-    }
-
     // Normalize phone: remove spaces, dashes
     const normalizedPhone = phone.replace(/[\s\-()]/g, '');
+    const tgId = telegramId ? String(telegramId) : null;
 
     const supabase = createServiceRoleClient();
 
-    // Check if this telegram_id is already linked to another profile
-    const { data: alreadyLinked } = await supabase
-      .from('profiles')
-      .select('id, phone')
-      .eq('telegram_id', String(telegramId))
-      .single();
+    // If we have a telegram_id, check it's not already linked to another profile
+    if (tgId) {
+      const { data: alreadyLinked } = await supabase
+        .from('profiles')
+        .select('id, phone')
+        .eq('telegram_id', tgId)
+        .single();
 
-    if (alreadyLinked && alreadyLinked.phone && alreadyLinked.phone !== normalizedPhone) {
-      // This Telegram account is already linked to a different phone
-      return NextResponse.json(
-        { error: 'Этот Telegram аккаунт уже привязан к другому номеру' },
-        { status: 400 }
-      );
+      if (alreadyLinked && alreadyLinked.phone && alreadyLinked.phone !== normalizedPhone) {
+        return NextResponse.json(
+          { error: 'Этот Telegram аккаунт уже привязан к другому номеру' },
+          { status: 400 }
+        );
+      }
     }
 
     // Find profile by phone number
@@ -53,34 +48,33 @@ export async function POST(request: NextRequest) {
       // Profile exists with this phone
 
       // Check if this profile is already linked to a DIFFERENT Telegram account
-      if (
-        existingProfile.telegram_id &&
-        String(existingProfile.telegram_id) !== String(telegramId)
-      ) {
+      if (tgId && existingProfile.telegram_id && existingProfile.telegram_id !== tgId) {
         return NextResponse.json(
           { error: 'Этот номер уже привязан к другому Telegram аккаунту' },
           { status: 400 }
         );
       }
 
-      // Link telegram_id to this profile
+      // Update profile: link telegram_id + update name if needed
       profileId = existingProfile.id;
-      const updates: Record<string, unknown> = {
-        telegram_id: String(telegramId),
-      };
-      // Only update name if profile doesn't have one yet
+      const updates: Record<string, unknown> = {};
+      if (tgId) {
+        updates.telegram_id = tgId;
+      }
       if (!existingProfile.full_name || existingProfile.full_name === 'Новый клиент') {
         updates.full_name = fullName || 'Новый клиент';
       }
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', profileId);
+      if (Object.keys(updates).length > 0) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', profileId);
 
-      if (updateError) {
-        console.error('Profile update error:', updateError);
-        return NextResponse.json({ error: 'Ошибка обновления профиля' }, { status: 500 });
+        if (updateError) {
+          console.error('Profile update error:', updateError);
+          return NextResponse.json({ error: 'Ошибка обновления профиля' }, { status: 500 });
+        }
       }
     } else {
       // No profile with this phone — create new
@@ -102,7 +96,7 @@ export async function POST(request: NextRequest) {
         full_name: fullName || 'Новый клиент',
         role: 'client',
         phone: normalizedPhone,
-        telegram_id: String(telegramId),
+        ...(tgId ? { telegram_id: tgId } : {}),
       });
 
       if (profileError) {
