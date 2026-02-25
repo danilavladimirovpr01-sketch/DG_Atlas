@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { validateTelegramInitData, parseTelegramUser } from '@/lib/telegram/validate';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { phone, telegramId, firstName, lastName } = await request.json();
+    const { phone, initData } = await request.json();
 
     if (!phone) {
       return NextResponse.json(
@@ -14,7 +15,21 @@ export async function POST(request: NextRequest) {
 
     // Normalize phone: remove spaces, dashes
     const normalizedPhone = phone.replace(/[\s\-()]/g, '');
-    const tgId = telegramId ? String(telegramId) : null;
+
+    // Extract telegram user from initData (server-side validation)
+    let tgId: string | null = null;
+    let tgName = '';
+
+    if (initData) {
+      const { valid, data } = validateTelegramInitData(initData);
+      if (valid) {
+        const tgUser = parseTelegramUser(data);
+        if (tgUser) {
+          tgId = tgUser.id;
+          tgName = [tgUser.firstName, tgUser.lastName].filter(Boolean).join(' ');
+        }
+      }
+    }
 
     const supabase = createServiceRoleClient();
 
@@ -41,7 +56,6 @@ export async function POST(request: NextRequest) {
       .eq('phone', normalizedPhone)
       .single();
 
-    const fullName = [firstName, lastName].filter(Boolean).join(' ');
     let profileId: string;
 
     if (existingProfile) {
@@ -61,8 +75,8 @@ export async function POST(request: NextRequest) {
       if (tgId) {
         updates.telegram_id = tgId;
       }
-      if (!existingProfile.full_name || existingProfile.full_name === 'Новый клиент') {
-        updates.full_name = fullName || 'Новый клиент';
+      if (tgName && (!existingProfile.full_name || existingProfile.full_name === 'Новый клиент')) {
+        updates.full_name = tgName;
       }
 
       if (Object.keys(updates).length > 0) {
@@ -93,7 +107,7 @@ export async function POST(request: NextRequest) {
 
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: profileId,
-        full_name: fullName || 'Новый клиент',
+        full_name: tgName || 'Новый клиент',
         role: 'client',
         phone: normalizedPhone,
         ...(tgId ? { telegram_id: tgId } : {}),
@@ -113,7 +127,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Fetch full profile from DB (with actual name)
+    // Fetch full profile from DB
     const { data: profile } = await supabase
       .from('profiles')
       .select('id, phone, full_name')

@@ -2,9 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Telegram Mini App safe area for fullscreen mode */
-:root {
-  --tma-safe-top: env(safe-area-inset-top, 0px);
+/* Telegram Mini App: prevent content from hiding behind TG header */
+.tma-container {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
 }
 
 @layer utilities {

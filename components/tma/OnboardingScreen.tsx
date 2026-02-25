@@ -196,7 +196,7 @@ function SlideToConfirm({
 
 /* ── Main screen ── */
 export default function OnboardingScreen() {
-  const { telegramUser, setProfile, setProject } = useTma();
+  const { setProfile, setProject } = useTma();
   const [phone, setPhone] = useState('+7');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -237,14 +237,17 @@ export default function OnboardingScreen() {
     setError('');
 
     try {
+      // Get initData directly from Telegram WebApp (more reliable than context)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tg = (window as any).Telegram?.WebApp;
+      const initData = tg?.initData || '';
+
       const res = await fetch('/api/tma/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: '+' + digits,
-          telegramId: telegramUser?.id,
-          firstName: telegramUser?.firstName,
-          lastName: telegramUser?.lastName,
+          initData,
         }),
       });
 

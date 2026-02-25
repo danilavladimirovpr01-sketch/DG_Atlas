@@ -73,7 +73,7 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
     <TmaContext.Provider
       value={{ profile, project, telegramUser, isLoading, setProfile, setProject }}
     >
-      <div className={`${inter.variable} font-sans min-h-screen bg-black text-white`}
+      <div className={`${inter.variable} font-sans min-h-screen bg-black text-white tma-container`}
            style={{
              fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
            }}>
