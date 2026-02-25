@@ -16,6 +16,7 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project | null>(null);
   const [telegramUser, setTelegramUser] = useState<TmaContextType['telegramUser']>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [safeTop, setSafeTop] = useState(0);
 
   useEffect(() => {
     // Expand TMA to full screen
@@ -24,6 +25,18 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
     if (tg) {
       tg.expand();
       tg.ready();
+
+      // Calculate safe area: device notch + Telegram header
+      const deviceTop = tg.safeAreaInset?.top ?? 0;
+      const contentTop = tg.contentSafeAreaInset?.top ?? 0;
+      setSafeTop(deviceTop + contentTop);
+
+      // Listen for viewport changes
+      tg.onEvent?.('contentSafeAreaChanged', () => {
+        const d = tg.safeAreaInset?.top ?? 0;
+        const c = tg.contentSafeAreaInset?.top ?? 0;
+        setSafeTop(d + c);
+      });
     }
 
     async function init() {
@@ -67,7 +80,10 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
       value={{ profile, project, telegramUser, isLoading, setProfile, setProject }}
     >
       <div className={`${inter.variable} font-sans min-h-screen bg-black text-white`}
-           style={{ fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif' }}>
+           style={{
+             fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
+             paddingTop: safeTop > 0 ? safeTop : undefined,
+           }}>
         {children}
       </div>
     </TmaContext.Provider>
