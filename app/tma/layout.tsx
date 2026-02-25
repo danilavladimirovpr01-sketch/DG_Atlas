@@ -26,17 +26,37 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
       tg.expand();
       tg.ready();
 
-      // Calculate safe area: device notch + Telegram header
-      const deviceTop = tg.safeAreaInset?.top ?? 0;
-      const contentTop = tg.contentSafeAreaInset?.top ?? 0;
-      setSafeTop(deviceTop + contentTop);
+      // Request fullscreen if available (Bot API 8.0+)
+      if (typeof tg.requestFullscreen === 'function') {
+        try { tg.requestFullscreen(); } catch {}
+      }
 
-      // Listen for viewport changes
-      tg.onEvent?.('contentSafeAreaChanged', () => {
-        const d = tg.safeAreaInset?.top ?? 0;
-        const c = tg.contentSafeAreaInset?.top ?? 0;
-        setSafeTop(d + c);
-      });
+      // Calculate safe area: device notch + Telegram header
+      const calcSafe = () => {
+        const deviceTop = tg.safeAreaInset?.top ?? 0;
+        const contentTop = tg.contentSafeAreaInset?.top ?? 0;
+        const total = deviceTop + contentTop;
+        if (total > 0) {
+          setSafeTop(total);
+          // Also set CSS variable for components that need it
+          document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', `${total}px`);
+        }
+      };
+      calcSafe();
+
+      // Listen for viewport/safe-area changes
+      tg.onEvent?.('contentSafeAreaChanged', calcSafe);
+      tg.onEvent?.('safeAreaChanged', calcSafe);
+      tg.onEvent?.('viewportChanged', calcSafe);
+
+      // Ensure viewport-fit=cover for iOS safe area
+      let meta = document.querySelector('meta[name="viewport"]');
+      if (meta) {
+        const content = meta.getAttribute('content') || '';
+        if (!content.includes('viewport-fit=cover')) {
+          meta.setAttribute('content', content + ', viewport-fit=cover');
+        }
+      }
     }
 
     async function init() {
@@ -82,7 +102,9 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
       <div className={`${inter.variable} font-sans min-h-screen bg-black text-white`}
            style={{
              fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
-             paddingTop: safeTop > 0 ? safeTop : undefined,
+             paddingTop: safeTop > 0
+               ? safeTop
+               : 'calc(env(safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px))',
            }}>
         {children}
       </div>
