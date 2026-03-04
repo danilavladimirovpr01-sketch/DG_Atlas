@@ -36,3 +36,4 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+scripts/\ntest-call*.mp3\n*.mp3
