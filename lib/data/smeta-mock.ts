@@ -18,7 +18,7 @@ export interface SmetaCategory {
   id: string;
   label: string;
   color: string;
-  iconName: 'Building' | 'Layers' | 'Triangle' | 'Sun' | 'Droplets' | 'AppWindow';
+  iconName: 'Building' | 'Layers' | 'Triangle' | 'Sun' | 'Droplets' | 'AppWindow' | 'Brush' | 'Zap' | 'LayoutDashboard';
   total: number;
   works: number;
   materials: number;
