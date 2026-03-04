@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, ChevronRight, AlertTriangle, Sparkles,
-  Check, Info, Building, Layers, Triangle, Sun,
+  Info, Building, Layers, Triangle, Sun,
   Droplets, AppWindow, Calendar,
 } from 'lucide-react';
 import {
@@ -117,7 +117,6 @@ function DonutChart({
       {/* Legend — 2-column grid */}
       <div className="grid grid-cols-2 gap-2">
         {segments.map((seg) => {
-          const Icon = ICON_MAP[seg.iconName];
           const pct = Math.round((seg.total / total) * 100);
           const isActive = highlightId === seg.id;
           return (
