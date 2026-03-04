@@ -9,10 +9,13 @@ const inter = Inter({
 export default function SmetaLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`${inter.variable} font-sans min-h-screen bg-black text-white`}
+      className={`${inter.variable} font-sans min-h-screen bg-[#0a0a0a]`}
       style={{ fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif' }}
     >
-      {children}
+      {/* Desktop: centered phone-width container */}
+      <div className="mx-auto max-w-[430px] min-h-screen bg-black text-white relative shadow-2xl">
+        {children}
+      </div>
     </div>
   );
 }
