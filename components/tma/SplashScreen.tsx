@@ -152,9 +152,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           <span
             style={{
               fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
-              fontSize: 7,
-              fontWeight: 600,
-              letterSpacing: '0.18em',
+              fontSize: 8,
+              fontWeight: 400,
+              letterSpacing: '0.25em',
               color: '#ffffff',
               textTransform: 'uppercase',
               textAlign: 'center',
