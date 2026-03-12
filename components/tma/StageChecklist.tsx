@@ -23,7 +23,7 @@ import {
 
 /* ─── Summary card ─── */
 function SummaryCard({ currentStage }: { currentStage: number }) {
-  const stats = getChecklistStats(currentStage);
+  const stats = getChecklistStats();
   const pct = Math.round((stats.done / stats.total) * 100);
 
   return (

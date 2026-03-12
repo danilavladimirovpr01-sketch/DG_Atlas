@@ -46,8 +46,6 @@ export default function RoadmapPage() {
   const circumference = 2 * Math.PI * circleRadius;
   const strokeDashoffset = circumference - (weightedProgress / 100) * circumference;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const firstName = statuses.length > 0 ? (current?.name || completed[completed.length - 1]?.name || '') : '';
 
   return (
     <div className="min-h-screen bg-black px-4 py-6">
