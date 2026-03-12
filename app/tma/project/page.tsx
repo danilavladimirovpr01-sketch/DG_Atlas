@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/laravel-client';
+import { api, toArray } from '@/lib/laravel-client';
 import { ArrowLeft, FolderOpen } from 'lucide-react';
 
 interface Project {
@@ -25,7 +25,7 @@ export default function ProjectPage() {
   useEffect(() => {
     api.get('/api/user/projects')
       .then((data) => {
-        setProjects(Array.isArray(data) ? data : data.data || []);
+        setProjects(toArray(data));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));

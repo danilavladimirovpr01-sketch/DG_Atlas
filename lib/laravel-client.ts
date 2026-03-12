@@ -52,3 +52,15 @@ export const api = {
   put: (path: string, body?: unknown) => request('PUT', path, body),
   delete: (path: string) => request('DELETE', path),
 };
+
+/** Safely extract array from any API response shape */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function toArray(res: any): any[] {
+  if (Array.isArray(res)) return res;
+  if (res && typeof res === 'object') {
+    for (const key of ['data', 'items', 'documents', 'files', 'media', 'results', 'list']) {
+      if (Array.isArray(res[key])) return res[key];
+    }
+  }
+  return [];
+}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/laravel-client';
+import { api, toArray } from '@/lib/laravel-client';
 import { ArrowLeft, Handshake, ExternalLink } from 'lucide-react';
 
 interface Partner {
@@ -21,7 +21,7 @@ export default function PartnersPage() {
   useEffect(() => {
     api.get('/api/user/partners')
       .then((data) => {
-        setPartners(Array.isArray(data) ? data : data.data || []);
+        setPartners(toArray(data));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/laravel-client';
+import { api, toArray } from '@/lib/laravel-client';
 import { ArrowLeft, FileText, Download, Send } from 'lucide-react';
 
 interface Document {
@@ -33,8 +33,8 @@ export default function DocumentsPage() {
       api.get('/api/user/chat-media').catch(() => []),
     ])
       .then(([docs, media]) => {
-        setDocuments(Array.isArray(docs) ? docs : docs.data || []);
-        setChatMedia(Array.isArray(media) ? media : media.data || []);
+        setDocuments(toArray(docs));
+        setChatMedia(toArray(media));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));

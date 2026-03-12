@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/laravel-client';
+import { api, toArray } from '@/lib/laravel-client';
 import { ArrowLeft, Plus, X, ClipboardList } from 'lucide-react';
 
 interface Request {
@@ -36,7 +36,7 @@ export default function RequestsPage() {
   async function loadRequests() {
     try {
       const data = await api.get('/api/user/requests');
-      setRequests(Array.isArray(data) ? data : data.data || []);
+      setRequests(toArray(data));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error');
     } finally {

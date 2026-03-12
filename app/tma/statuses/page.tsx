@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/laravel-client';
+import { api, toArray } from '@/lib/laravel-client';
 import { ArrowLeft, Lock } from 'lucide-react';
 
 interface Status {
@@ -20,7 +20,7 @@ export default function StatusesPage() {
   useEffect(() => {
     api.get('/api/user/statuses')
       .then((data) => {
-        setStatuses(Array.isArray(data) ? data : data.data || []);
+        setStatuses(toArray(data));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));

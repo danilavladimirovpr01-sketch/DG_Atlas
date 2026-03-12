@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/laravel-client';
+import { api, toArray } from '@/lib/laravel-client';
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 
 interface FaqItem {
@@ -20,7 +20,7 @@ export default function FaqPage() {
   useEffect(() => {
     api.get('/api/user/faqs')
       .then((data) => {
-        const list = Array.isArray(data) ? data : data.data || [];
+        const list = toArray(data);
         setItems(list);
         if (list.length > 0) setOpenId(list[0].id);
       })
