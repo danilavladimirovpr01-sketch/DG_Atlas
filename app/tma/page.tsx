@@ -10,12 +10,7 @@ export default function TmaPage() {
   const { profile, project, isLoading } = useTma();
   const [splashDone, setSplashDone] = useState(false);
 
-  // Показываем сплеш при каждом открытии (3 секунды)
-  if (!splashDone) {
-    return <SplashScreen onComplete={() => setSplashDone(true)} />;
-  }
-
-  // Если авторизация ещё идёт после сплеша — краткий спиннер
+  // Пока идёт авторизация — спиннер
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -24,9 +19,14 @@ export default function TmaPage() {
     );
   }
 
-  // Не прошёл онбординг — показываем ввод телефона
+  // Не прошёл онбординг — показываем ввод телефона (без сплеша)
   if (!profile || !project) {
     return <OnboardingScreen />;
+  }
+
+  // Авторизован — сплеш один раз, потом главный экран
+  if (!splashDone) {
+    return <SplashScreen onComplete={() => setSplashDone(true)} />;
   }
 
   return <WelcomeScreen />;
