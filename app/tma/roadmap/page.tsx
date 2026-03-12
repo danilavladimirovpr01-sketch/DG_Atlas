@@ -23,7 +23,7 @@ export default function RoadmapPage() {
     api.get('/api/user/statuses')
       .then((res) => {
         const data = res?.data ?? res;
-        setStatuses(toArray(data));
+        setStatuses(toArray(data) as FunnelStatus[]);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -45,8 +45,6 @@ export default function RoadmapPage() {
   const circleRadius = 58;
   const circumference = 2 * Math.PI * circleRadius;
   const strokeDashoffset = circumference - (weightedProgress / 100) * circumference;
-
-  const firstName = statuses.length > 0 ? (current?.name || completed[completed.length - 1]?.name || '') : '';
 
   return (
     <div className="min-h-screen bg-black px-4 py-6">
