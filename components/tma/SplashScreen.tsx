@@ -137,33 +137,17 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           animation: 'logoAppear 0.9s ease-out 0.2s both',
         }}
       >
-        <div
+        <img
+          src={`${BASE}/icon-192.png`}
+          alt="DOMGAZOBETON"
           style={{
             width: 80,
             height: 80,
             borderRadius: '50%',
-            background: '#111111',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+            display: 'block',
           }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
-              fontSize: 8,
-              fontWeight: 400,
-              letterSpacing: '0.25em',
-              color: '#ffffff',
-              textTransform: 'uppercase',
-              textAlign: 'center',
-              padding: '0 8px',
-            }}
-          >
-            DOMGAZOBETON
-          </span>
-        </div>
+        />
       </div>
 
       {/* Текст снизу */}
