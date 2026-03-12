@@ -1,23 +1,32 @@
 'use client';
 
+import { useState } from 'react';
 import { useTma } from '@/lib/tma-context';
 import WelcomeScreen from '@/components/tma/WelcomeScreen';
 import OnboardingScreen from '@/components/tma/OnboardingScreen';
+import SplashScreen from '@/components/tma/SplashScreen';
 
 export default function TmaPage() {
   const { profile, project, isLoading } = useTma();
+  const [splashDone, setSplashDone] = useState(false);
 
+  // Пока идёт авторизация — спиннер
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="animate-pulse text-zinc-400 text-lg">Загрузка...</div>
+        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  // Not onboarded yet — show phone input
+  // Не прошёл онбординг — показываем ввод телефона (без сплеша)
   if (!profile || !project) {
     return <OnboardingScreen />;
+  }
+
+  // Авторизован — сплеш один раз, потом главный экран
+  if (!splashDone) {
+    return <SplashScreen onComplete={() => setSplashDone(true)} />;
   }
 
   return <WelcomeScreen />;
