@@ -22,8 +22,7 @@ import {
 } from '@/lib/constants/checklist-items';
 
 /* ─── Summary card ─── */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function SummaryCard({ currentStage }: { currentStage: number }) {
+function SummaryCard() {
   const stats = getChecklistStats();
   const pct = Math.round((stats.done / stats.total) * 100);
 
@@ -356,7 +355,7 @@ export default function StageChecklist() {
       </div>
 
       {/* Summary */}
-      <SummaryCard currentStage={currentStage} />
+      <SummaryCard />
 
       {/* Filters */}
       <div className="mt-5 mb-5">
