@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 const PHOTOS = [
-  { src: '/splash/splash-1.png', animation: 'kenBurns1' }, // ночная
-  { src: '/splash/splash-2.png', animation: 'kenBurns2' }, // аэросъёмка
-  { src: '/splash/splash-3.png', animation: 'kenBurns3' }, // дневная с газоном
+  { src: '/splash/splash-1.png', animation: 'kenBurns1', position: 'center 60%' }, // вечерняя с подсветкой
+  { src: '/splash/splash-2.png', animation: 'kenBurns2', position: 'center 40%' }, // дневная фасад
+  { src: '/splash/splash-3.png', animation: 'kenBurns3', position: 'center 35%' }, // аэросъёмка
 ];
 
 const SLIDE_DURATION = 1600;
@@ -51,7 +51,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       }}
     >
       {/* Фотографии */}
-      {PHOTOS.map(({ src, animation }, i) => (
+      {PHOTOS.map(({ src, animation, position }, i) => (
         <div
           key={src}
           style={{
@@ -74,7 +74,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               alt=""
               fill
               unoptimized
-              style={{ objectFit: 'cover', objectPosition: 'center' }}
+              style={{ objectFit: 'cover', objectPosition: position }}
               priority={i === 0}
               sizes="100vw"
             />
