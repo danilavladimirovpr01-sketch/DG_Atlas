@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 
 const PHOTOS = [
   { src: '/splash/splash-1.jpg', animation: 'kenBurns1', position: 'center 50%' }, // дом на холме с прудом
@@ -66,18 +65,22 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             style={{
               position: 'absolute',
               inset: '-10%',
+              width: '120%',
+              height: '120%',
               animation: `${animation} ${TOTAL_DURATION}ms ease-out forwards`,
               animationPlayState: activeIndex === i ? 'running' : 'paused',
             }}
           >
-            <Image
+            <img
               src={src}
               alt=""
-              fill
-              unoptimized
-              style={{ objectFit: 'cover', objectPosition: position }}
-              priority={i === 0}
-              sizes="100vw"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: position,
+                display: 'block',
+              }}
             />
           </div>
         </div>
