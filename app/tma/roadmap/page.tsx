@@ -23,7 +23,7 @@ export default function RoadmapPage() {
     api.get('/api/user/statuses')
       .then((res) => {
         const data = res?.data ?? res;
-        setStatuses(toArray(data));
+        setStatuses(toArray(data) as FunnelStatus[]);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
