@@ -41,7 +41,7 @@ function getGreeting(): string {
 }
 
 export default function WelcomeScreen() {
-  const { profile, project } = useTma();
+  const { profile } = useTma();
   const [overallProgress, setOverallProgress] = useState(0);
 
   const firstName = profile?.full_name?.split(' ')[0] || 'Клиент';
