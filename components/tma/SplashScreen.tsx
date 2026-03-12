@@ -80,6 +80,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               src={src}
               alt=""
               fill
+              unoptimized
               style={{ objectFit: 'cover', objectPosition: 'center' }}
               priority={i === 0}
               sizes="100vw"
