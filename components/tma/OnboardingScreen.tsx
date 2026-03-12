@@ -256,6 +256,11 @@ export default function OnboardingScreen() {
         return;
       }
 
+      // Save JWT token for Laravel API calls
+      if (data.token) {
+        localStorage.setItem('jwt_token', data.token);
+      }
+
       setProfile(data.profile);
       setProject(data.project);
     } catch {
