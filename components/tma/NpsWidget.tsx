@@ -64,7 +64,8 @@ export default function NpsWidget({
     const comment = textQuestion ? (answers[textQuestion.key] as string) || null : null;
 
     try {
-      await fetch('/api/nps', {
+      const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+      await fetch(`${base}/api/nps`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

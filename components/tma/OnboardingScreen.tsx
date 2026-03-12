@@ -237,7 +237,8 @@ export default function OnboardingScreen() {
     setError('');
 
     try {
-      const res = await fetch('/api/tma/onboarding', {
+      const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+      const res = await fetch(`${base}/api/tma/onboarding`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

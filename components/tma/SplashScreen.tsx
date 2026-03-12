@@ -113,7 +113,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/logo-dg.svg"
+          src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/logo-dg.svg`}
           alt="Domgazobeton"
           style={{
             width: 160,

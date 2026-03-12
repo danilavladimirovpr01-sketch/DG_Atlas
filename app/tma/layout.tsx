@@ -42,7 +42,8 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const res = await fetch('/api/tma/auth', {
+        const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+        const res = await fetch(`${base}/api/tma/auth`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ initData }),
