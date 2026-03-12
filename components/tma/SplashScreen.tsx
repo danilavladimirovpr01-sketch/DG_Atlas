@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 const PHOTOS = [
-  { src: '/splash/splash-1.png', animation: 'kenBurns1', position: 'center 60%' }, // вечерняя с подсветкой
-  { src: '/splash/splash-2.png', animation: 'kenBurns2', position: 'center 40%' }, // дневная фасад
-  { src: '/splash/splash-3.png', animation: 'kenBurns3', position: 'center 35%' }, // аэросъёмка
+  { src: '/splash/splash-1.png', animation: 'kenBurns1', position: 'center 50%' }, // дом на холме с прудом
+  { src: '/splash/splash-2.png', animation: 'kenBurns2', position: 'center 40%' }, // дом с причалом
+  { src: '/splash/splash-3.png', animation: 'kenBurns3', position: 'center 30%' }, // дом у моря аэро
+  { src: '/splash/splash-4.png', animation: 'kenBurns4', position: 'center 40%' }, // лесной комплекс аэро
 ];
 
 const SLIDE_DURATION = 1600;
-const TOTAL_DURATION = 4800;
+const TOTAL_DURATION = 7000;
 const FADE_OUT_DURATION = 600;
 
 interface SplashScreenProps {

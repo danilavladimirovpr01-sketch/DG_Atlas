@@ -15,6 +15,10 @@
   from { transform: scale(1) translate(0, 2%); }
   to   { transform: scale(1.15) translate(1%, -2%); }
 }
+@keyframes kenBurns4 {
+  from { transform: scale(1.05) translate(-1%, 0); }
+  to   { transform: scale(1.2) translate(2%, -1%); }
+}
 @keyframes splashFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
