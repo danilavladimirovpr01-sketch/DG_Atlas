@@ -3,6 +3,7 @@ import {
   CircleDollarSign, CalendarDays, Calculator, Maximize2,
   Image, Play, FileText, CheckCircle2,
   MessageCircle, Bell, CheckSquare, BookOpen,
+  ClipboardList,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -141,6 +142,15 @@ const ALL_FEATURES: TmaFeature[] = [
 
   // ── Поддержка ──
   {
+    id: 'requests',
+    title: 'Заявки',
+    description: 'Обращения к руководству, запросы документов, заявки технадзору — всё в одном месте',
+    icon: ClipboardList,
+    route: '/tma/requests',
+    category: 'support',
+    ready: true,
+  },
+  {
     id: 'chat',
     title: 'AI помощник 24/7',
     description: 'Мгновенные ответы на 70% вопросов. Понимает контекст твоего проекта',
@@ -165,7 +175,7 @@ const ALL_FEATURES: TmaFeature[] = [
     icon: CheckSquare,
     route: '/tma/tasks',
     category: 'support',
-    ready: false,
+    ready: true,
   },
   {
     id: 'education',

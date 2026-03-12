@@ -1,5 +1,26 @@
-import FeatureStub from '@/components/tma/FeatureStub';
+'use client';
+
+import { useTma } from '@/lib/tma-context';
+import StageChecklist from '@/components/tma/StageChecklist';
 
 export default function TasksPage() {
-  return <FeatureStub featureId="tasks" />;
+  const { isLoading, profile, project } = useTma();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="animate-pulse text-zinc-400 text-lg">Загрузка...</div>
+      </div>
+    );
+  }
+
+  if (!profile || !project) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <p className="text-zinc-400">Сначала войдите в систему</p>
+      </div>
+    );
+  }
+
+  return <StageChecklist />;
 }
