@@ -20,7 +20,6 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [fadeOut, setFadeOut] = useState(false);
-  // Используем ref чтобы смена onComplete не перезапускала таймеры
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
@@ -29,20 +28,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       setActiveIndex((prev) => (prev + 1) % PHOTOS.length);
     }, SLIDE_DURATION);
 
-    const fadeTimer = setTimeout(() => {
-      setFadeOut(true);
-    }, TOTAL_DURATION);
-
-    const doneTimer = setTimeout(() => {
-      onCompleteRef.current();
-    }, TOTAL_DURATION + FADE_OUT_DURATION);
+    const fadeTimer = setTimeout(() => setFadeOut(true), TOTAL_DURATION);
+    const doneTimer = setTimeout(() => onCompleteRef.current(), TOTAL_DURATION + FADE_OUT_DURATION);
 
     return () => {
       clearInterval(interval);
       clearTimeout(fadeTimer);
       clearTimeout(doneTimer);
     };
-  }, []); // без зависимостей — таймеры стартуют один раз
+  }, []);
 
   return (
     <div
@@ -56,7 +50,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         transition: `opacity ${FADE_OUT_DURATION}ms ease-in-out`,
       }}
     >
-      {/* Слои фотографий */}
+      {/* Фотографии */}
       {PHOTOS.map(({ src, animation }, i) => (
         <div
           key={src}
@@ -64,14 +58,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             position: 'absolute',
             inset: 0,
             opacity: activeIndex === i ? 1 : 0,
-            transition: 'opacity 0.7s ease-in-out',
+            transition: 'opacity 0.8s ease-in-out',
           }}
         >
           <div
             style={{
               position: 'absolute',
               inset: '-10%',
-              // Анимация стартует с начала только когда фото становится активным
               animation: `${animation} ${TOTAL_DURATION}ms ease-out forwards`,
               animationPlayState: activeIndex === i ? 'running' : 'paused',
             }}
@@ -89,60 +82,109 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         </div>
       ))}
 
-      {/* Тёмный градиент поверх фото */}
+      {/* Градиент сверху */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background:
-            'linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 100%)',
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 35%)',
         }}
       />
 
-      {/* Логотип по центру */}
+      {/* Градиент снизу */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          animation: 'logoAppear 0.8s ease-out 0.3s both',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%)',
         }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/logo-dg.svg`}
-          alt="Domgazobeton"
-          style={{
-            width: 160,
-            filter: 'brightness(0) invert(1) drop-shadow(0 2px 20px rgba(0,0,0,0.5))',
-          }}
-        />
-      </div>
+      />
 
-      {/* Индикаторы (точки) */}
+      {/* Логотип — верх по центру */}
       <div
         style={{
           position: 'absolute',
-          bottom: 48,
+          top: 52,
           left: 0,
           right: 0,
           display: 'flex',
           justifyContent: 'center',
-          gap: 8,
-          animation: 'logoAppear 0.6s ease-out 0.5s both',
+          animation: 'logoAppear 0.9s ease-out 0.2s both',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
+            fontSize: 13,
+            fontWeight: 700,
+            letterSpacing: '0.22em',
+            color: 'rgba(255,255,255,0.95)',
+            textTransform: 'uppercase',
+          }}
+        >
+          DOMGAZOBETON
+        </span>
+      </div>
+
+      {/* Текст снизу */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 72,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 6,
+          animation: 'logoAppear 0.9s ease-out 0.5s both',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
+            fontSize: 22,
+            fontWeight: 600,
+            color: '#ffffff',
+            letterSpacing: '0.01em',
+          }}
+        >
+          Строим ваш дом
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
+            fontSize: 13,
+            fontWeight: 400,
+            color: 'rgba(255,255,255,0.6)',
+            letterSpacing: '0.03em',
+          }}
+        >
+          Личный кабинет клиента
+        </span>
+      </div>
+
+      {/* Индикаторы */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 40,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 6,
+          animation: 'logoAppear 0.6s ease-out 0.6s both',
         }}
       >
         {PHOTOS.map((_, i) => (
           <div
             key={i}
             style={{
-              width: activeIndex === i ? 24 : 6,
-              height: 6,
-              borderRadius: 3,
-              background: activeIndex === i ? '#ffffff' : 'rgba(255,255,255,0.4)',
+              width: activeIndex === i ? 20 : 5,
+              height: 2,
+              borderRadius: 1,
+              background: activeIndex === i ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)',
               transition: 'all 0.4s ease',
             }}
           />
