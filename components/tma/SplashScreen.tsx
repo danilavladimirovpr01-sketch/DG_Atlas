@@ -144,7 +144,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           }}
         >
           <img
-            src="/miniapp/logo-dg.svg"
+            src={`${BASE}/logo-dg.svg`}
             alt="DomGazobeton"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
