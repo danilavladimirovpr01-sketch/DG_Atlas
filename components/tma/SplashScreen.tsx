@@ -6,9 +6,9 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 const PHOTOS = [
   { src: `${BASE}/splash/splash-1.jpg`, animation: 'kenBurns1', position: 'center 50%', title: null, subtitle: 'Наблюдай путь от мечты к дому' },
-  { src: `${BASE}/splash/splash-2.jpg`, animation: 'kenBurns2', position: 'center 40%', title: 'Строительство вашей мечты', subtitle: null },
-  { src: `${BASE}/splash/splash-3.jpg`, animation: 'kenBurns3', position: 'center 30%', title: 'Полный контроль в телефоне', subtitle: null },
-  { src: `${BASE}/splash/splash-4.jpg`, animation: 'kenBurns4', position: 'center 40%', title: 'Мы строим — вы наблюдаете', subtitle: 'С нами просто' },
+  { src: `${BASE}/splash/splash-2.jpg`, animation: 'kenBurns2', position: 'center 40%', title: null, subtitle: 'Строительство вашей мечты' },
+  { src: `${BASE}/splash/splash-3.jpg`, animation: 'kenBurns3', position: 'center 30%', title: null, subtitle: 'Полный контроль в телефоне' },
+  { src: `${BASE}/splash/splash-4.jpg`, animation: 'kenBurns4', position: 'center 40%', title: null, subtitle: 'С нами просто' },
 ];
 
 const SLIDE_DURATION = 1500;
