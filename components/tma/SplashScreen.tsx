@@ -136,18 +136,30 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       >
         <div
           style={{
-            width: 72,
-            height: 72,
+            width: 80,
+            height: 80,
             borderRadius: '50%',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            background: 'rgba(20,20,20,0.92)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          <img
-            src={`${BASE}/logo-dg.svg`}
-            alt="DomGazobeton"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
+          <span
+            style={{
+              fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
+              fontSize: 7,
+              fontWeight: 600,
+              letterSpacing: '0.18em',
+              color: '#ffffff',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              padding: '0 8px',
+            }}
+          >
+            DOMGAZOBETON
+          </span>
         </div>
       </div>
 
