@@ -8,7 +8,17 @@ import SplashScreen from '@/components/tma/SplashScreen';
 
 export default function TmaPage() {
   const { profile, project, isLoading } = useTma();
-  const [splashDone, setSplashDone] = useState(false);
+  const [splashDone, setSplashDone] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('splashDone') === '1';
+    }
+    return false;
+  });
+
+  function handleSplashComplete() {
+    sessionStorage.setItem('splashDone', '1');
+    setSplashDone(true);
+  }
 
   // Пока идёт авторизация — спиннер
   if (isLoading) {
@@ -26,7 +36,7 @@ export default function TmaPage() {
 
   // Авторизован — сплеш один раз, потом главный экран
   if (!splashDone) {
-    return <SplashScreen onComplete={() => setSplashDone(true)} />;
+    return <SplashScreen onComplete={handleSplashComplete} />;
   }
 
   return <WelcomeScreen />;
