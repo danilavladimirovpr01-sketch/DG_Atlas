@@ -1,10 +1,200 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTma } from '@/lib/tma-context';
 import { Input } from '@/components/ui/input';
 import { ArrowRight, Loader2 } from 'lucide-react';
 
+/* ── Slide-to-confirm ── */
+function SlideToConfirm({
+  onConfirm,
+  loading,
+  disabled,
+}: {
+  onConfirm: () => void;
+  loading: boolean;
+  disabled: boolean;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const startX = useRef(0);
+  const currentX = useRef(0);
+  const [confirmed, setConfirmed] = useState(false);
+  const [, forceRender] = useState(0);
+
+  const THUMB = 56;
+  const PAD = 4;
+
+  function getMax() {
+    if (!trackRef.current) return 200;
+    return trackRef.current.offsetWidth - THUMB - PAD * 2;
+  }
+
+  function updateThumb(x: number) {
+    currentX.current = Math.max(0, Math.min(x, getMax()));
+    if (thumbRef.current) {
+      thumbRef.current.style.left = `${PAD + currentX.current}px`;
+      thumbRef.current.style.transition = 'none';
+    }
+  }
+
+  function snapBack() {
+    currentX.current = 0;
+    if (thumbRef.current) {
+      thumbRef.current.style.transition = 'left 0.4s cubic-bezier(0.32,0.72,0,1)';
+      thumbRef.current.style.left = `${PAD}px`;
+    }
+  }
+
+  function snapEnd() {
+    const max = getMax();
+    currentX.current = max;
+    if (thumbRef.current) {
+      thumbRef.current.style.transition = 'left 0.2s ease-out';
+      thumbRef.current.style.left = `${PAD + max}px`;
+    }
+  }
+
+  /* Touch events on thumb */
+  function onTouchStart(e: React.TouchEvent) {
+    if (loading || disabled || confirmed) return;
+    e.stopPropagation();
+    dragging.current = true;
+    startX.current = e.touches[0].clientX - currentX.current;
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (!dragging.current) return;
+    e.stopPropagation();
+    const x = e.touches[0].clientX - startX.current;
+    updateThumb(x);
+    forceRender((n) => n + 1);
+  }
+
+  function onTouchEnd() {
+    if (!dragging.current) return;
+    dragging.current = false;
+    if (currentX.current > getMax() * 0.75) {
+      snapEnd();
+      setConfirmed(true);
+      onConfirm();
+    } else {
+      snapBack();
+    }
+    forceRender((n) => n + 1);
+  }
+
+  /* Mouse events (for desktop testing) */
+  function onMouseDown(e: React.MouseEvent) {
+    if (loading || disabled || confirmed) return;
+    e.preventDefault();
+    dragging.current = true;
+    startX.current = e.clientX - currentX.current;
+
+    function onMouseMove(ev: MouseEvent) {
+      if (!dragging.current) return;
+      updateThumb(ev.clientX - startX.current);
+      forceRender((n) => n + 1);
+    }
+
+    function onMouseUp() {
+      if (!dragging.current) return;
+      dragging.current = false;
+      if (currentX.current > getMax() * 0.75) {
+        snapEnd();
+        setConfirmed(true);
+        onConfirm();
+      } else {
+        snapBack();
+      }
+      forceRender((n) => n + 1);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
+  /* Reset */
+  useEffect(() => {
+    if (!loading && !confirmed) {
+      snapBack();
+    }
+  }, [loading]);
+
+  const progress = getMax() > 0 ? currentX.current / getMax() : 0;
+  const isDisabledVisual = disabled && !loading;
+
+  return (
+    <div
+      ref={trackRef}
+      className="relative rounded-full overflow-hidden select-none"
+      style={{
+        height: THUMB + PAD * 2,
+        padding: PAD,
+        background: '#1a1a1a',
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        opacity: isDisabledVisual ? 0.4 : 1,
+        transition: 'opacity 0.3s',
+      }}
+    >
+      {/* Label */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        style={{ opacity: loading || confirmed ? 0 : Math.max(0, 1 - progress * 2) }}
+      >
+        <span style={{ color: '#666', fontSize: 15, fontWeight: 500, letterSpacing: '-0.01em' }}>
+          {isDisabledVisual ? 'Введите номер' : 'Свайпните для входа'}
+        </span>
+      </div>
+
+      {/* Loading spinner */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
+        </div>
+      )}
+
+      {/* Thumb */}
+      {!loading && (
+        <div
+          ref={thumbRef}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onMouseDown={onMouseDown}
+          style={{
+            position: 'absolute',
+            top: PAD,
+            left: PAD,
+            width: THUMB,
+            height: THUMB,
+            borderRadius: '50%',
+            background: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: disabled ? 'not-allowed' : 'grab',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+            zIndex: 10,
+            touchAction: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <ArrowRight
+            style={{ width: 24, height: 24, color: '#000', strokeWidth: 2.5 }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Main screen ── */
 export default function OnboardingScreen() {
   const { telegramUser, setProfile, setProject } = useTma();
   const [phone, setPhone] = useState('+7');
@@ -151,40 +341,12 @@ export default function OnboardingScreen() {
               <p className="text-[#FF3B30] text-sm text-center">{error}</p>
             )}
 
-            <button
-              onClick={handleSubmit}
-              disabled={!isPhoneValid || loading}
-              className="w-full h-14 rounded-full flex items-center justify-center transition-all duration-300"
-              style={{
-                background: isPhoneValid && !loading ? '#fff' : '#1a1a1a',
-                border: '1px solid rgba(255,255,255,0.08)',
-                opacity: !isPhoneValid && !loading ? 0.4 : 1,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              }}
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span
-                    style={{
-                      color: isPhoneValid ? '#000' : '#666',
-                      fontSize: 15,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Войти
-                  </span>
-                  <ArrowRight
-                    style={{
-                      width: 18,
-                      height: 18,
-                      color: isPhoneValid ? '#000' : '#666',
-                    }}
-                  />
-                </div>
-              )}
-            </button>
+            {/* Slide to confirm */}
+            <SlideToConfirm
+              onConfirm={handleSubmit}
+              loading={loading}
+              disabled={!isPhoneValid}
+            />
           </div>
         </div>
       </div>
