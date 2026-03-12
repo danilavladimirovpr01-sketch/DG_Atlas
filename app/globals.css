@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ken Burns animations for SplashScreen */
+@keyframes kenBurns1 {
+  from { transform: scale(1) translate(0, 0); }
+  to   { transform: scale(1.18) translate(-3%, 1%); }
+}
+@keyframes kenBurns2 {
+  from { transform: scale(1.05) translate(2%, 1%); }
+  to   { transform: scale(1.2) translate(-2%, -1%); }
+}
+@keyframes kenBurns3 {
+  from { transform: scale(1) translate(0, 2%); }
+  to   { transform: scale(1.15) translate(1%, -2%); }
+}
+@keyframes splashFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes logoAppear {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Telegram Mini App: prevent content from hiding behind TG header */
 .tma-container {
   padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
