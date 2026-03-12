@@ -37,7 +37,31 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
       try {
         const initData = tg?.initData;
         if (!initData) {
-          // Development mode — use mock data
+          // Development / browser mode — use mock data
+          setProfile({
+            id: 'dev-user-001',
+            full_name: 'Тестовый клиент',
+            role: 'client',
+            telegram_id: '123456789',
+            phone: '+7 (999) 123-45-67',
+            created_at: new Date().toISOString(),
+          });
+          setProject({
+            id: 'dev-project-001',
+            client_id: 'dev-user-001',
+            manager_id: null,
+            current_stage: 4,
+            status: 'active',
+            cover_photo_url: null,
+            title: 'Дом в Подмосковье',
+            created_at: new Date().toISOString(),
+          });
+          setTelegramUser({
+            id: '123456789',
+            firstName: 'Тестовый',
+            lastName: 'Клиент',
+            username: 'test_client',
+          });
           setIsLoading(false);
           return;
         }
