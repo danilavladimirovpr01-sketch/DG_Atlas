@@ -112,18 +112,21 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           animation: 'logoAppear 0.9s ease-out 0.2s both',
         }}
       >
-        <span
+        <div
           style={{
-            fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: '0.22em',
-            color: 'rgba(255,255,255,0.95)',
-            textTransform: 'uppercase',
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
           }}
         >
-          DOMGAZOBETON
-        </span>
+          <img
+            src="/miniapp/logo-dg.svg"
+            alt="DomGazobeton"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
       </div>
 
       {/* Текст снизу */}
@@ -160,7 +163,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             letterSpacing: '0.03em',
           }}
         >
-          Личный кабинет клиента
+          Наблюдай путь от мечты к дому
         </span>
       </div>
 
