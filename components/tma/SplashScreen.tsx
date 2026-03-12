@@ -9,8 +9,8 @@ const PHOTOS = [
   { src: '/splash/splash-3.png', animation: 'kenBurns3' }, // дневная с газоном
 ];
 
-const SLIDE_DURATION = 1100;
-const TOTAL_DURATION = 3000;
+const SLIDE_DURATION = 1600;
+const TOTAL_DURATION = 4800;
 const FADE_OUT_DURATION = 600;
 
 interface SplashScreenProps {
