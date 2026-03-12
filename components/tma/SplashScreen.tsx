@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
 const PHOTOS = [
-  { src: '/splash/splash-1.jpg', animation: 'kenBurns1', position: 'center 50%' }, // дом на холме с прудом
-  { src: '/splash/splash-2.jpg', animation: 'kenBurns2', position: 'center 40%' }, // дом с причалом
-  { src: '/splash/splash-3.jpg', animation: 'kenBurns3', position: 'center 30%' }, // дом у моря аэро
-  { src: '/splash/splash-4.jpg', animation: 'kenBurns4', position: 'center 40%' }, // лесной комплекс аэро
+  { src: `${BASE}/splash/splash-1.jpg`, animation: 'kenBurns1', position: 'center 50%' },
+  { src: `${BASE}/splash/splash-2.jpg`, animation: 'kenBurns2', position: 'center 40%' },
+  { src: `${BASE}/splash/splash-3.jpg`, animation: 'kenBurns3', position: 'center 30%' },
+  { src: `${BASE}/splash/splash-4.jpg`, animation: 'kenBurns4', position: 'center 40%' },
 ];
 
 const SLIDE_DURATION = 2500;
@@ -22,6 +24,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [fadeOut, setFadeOut] = useState(false);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
+
+  // Preload all images immediately
+  useEffect(() => {
+    PHOTOS.forEach(({ src }) => {
+      const img = new window.Image();
+      img.src = src;
+    });
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
