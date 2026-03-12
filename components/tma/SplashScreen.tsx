@@ -22,18 +22,26 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [fadeOut, setFadeOut] = useState(false);
+  const [ready, setReady] = useState(false);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
-  // Preload all images immediately
   useEffect(() => {
-    PHOTOS.forEach(({ src }) => {
+    // Preload first image, then preload rest
+    const first = new window.Image();
+    first.onload = () => setReady(true);
+    first.onerror = () => setReady(true); // show anyway on error
+    first.src = PHOTOS[0].src;
+
+    PHOTOS.slice(1).forEach(({ src }) => {
       const img = new window.Image();
       img.src = src;
     });
   }, []);
 
   useEffect(() => {
+    if (!ready) return;
+
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % PHOTOS.length);
     }, SLIDE_DURATION);
@@ -46,7 +54,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       clearTimeout(fadeTimer);
       clearTimeout(doneTimer);
     };
-  }, []);
+  }, [ready]);
 
   return (
     <div
