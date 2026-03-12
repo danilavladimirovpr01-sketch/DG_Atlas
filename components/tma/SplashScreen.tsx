@@ -5,10 +5,10 @@ import { useEffect, useRef, useState } from 'react';
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 const PHOTOS = [
-  { src: `${BASE}/splash/splash-1.jpg`, animation: 'kenBurns1', position: 'center 50%' },
-  { src: `${BASE}/splash/splash-2.jpg`, animation: 'kenBurns2', position: 'center 40%' },
-  { src: `${BASE}/splash/splash-3.jpg`, animation: 'kenBurns3', position: 'center 30%' },
-  { src: `${BASE}/splash/splash-4.jpg`, animation: 'kenBurns4', position: 'center 40%' },
+  { src: `${BASE}/splash/splash-1.jpg`, animation: 'kenBurns1', position: 'center 50%', title: null, subtitle: 'Наблюдай путь от мечты к дому' },
+  { src: `${BASE}/splash/splash-2.jpg`, animation: 'kenBurns2', position: 'center 40%', title: 'Строительство вашей мечты', subtitle: null },
+  { src: `${BASE}/splash/splash-3.jpg`, animation: 'kenBurns3', position: 'center 30%', title: 'Полный контроль в телефоне', subtitle: null },
+  { src: `${BASE}/splash/splash-4.jpg`, animation: 'kenBurns4', position: 'center 40%', title: 'Мы строим — вы наблюдаете', subtitle: 'С нами просто' },
 ];
 
 const SLIDE_DURATION = 1500;
@@ -151,42 +151,52 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       </div>
 
       {/* Текст снизу */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 72,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 6,
-          animation: 'logoAppear 0.9s ease-out 0.5s both',
-        }}
-      >
-        <span
+      {PHOTOS.map(({ src, title, subtitle }, i) => (
+        <div
+          key={src}
           style={{
-            fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
-            fontSize: 22,
-            fontWeight: 600,
-            color: '#ffffff',
-            letterSpacing: '0.01em',
+            position: 'absolute',
+            bottom: 72,
+            left: 24,
+            right: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 6,
+            opacity: activeIndex === i ? 1 : 0,
+            transition: 'opacity 0.8s ease-in-out',
           }}
         >
-          Строим ваш дом
-        </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
-            fontSize: 13,
-            fontWeight: 400,
-            color: 'rgba(255,255,255,0.6)',
-            letterSpacing: '0.03em',
-          }}
-        >
-          Наблюдай путь от мечты к дому
-        </span>
-      </div>
+          {title && (
+            <span
+              style={{
+                fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
+                fontSize: 22,
+                fontWeight: 600,
+                color: '#ffffff',
+                letterSpacing: '0.01em',
+                textAlign: 'center',
+              }}
+            >
+              {title}
+            </span>
+          )}
+          {subtitle && (
+            <span
+              style={{
+                fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
+                fontSize: 13,
+                fontWeight: 400,
+                color: 'rgba(255,255,255,0.6)',
+                letterSpacing: '0.03em',
+                textAlign: 'center',
+              }}
+            >
+              {subtitle}
+            </span>
+          )}
+        </div>
+      ))}
 
       {/* Индикаторы */}
       <div
