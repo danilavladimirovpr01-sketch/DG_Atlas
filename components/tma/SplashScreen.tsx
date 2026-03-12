@@ -11,9 +11,9 @@ const PHOTOS = [
   { src: `${BASE}/splash/splash-4.jpg`, animation: 'kenBurns4', position: 'center 40%' },
 ];
 
-const SLIDE_DURATION = 2500;
-const TOTAL_DURATION = 11000;
-const FADE_OUT_DURATION = 600;
+const SLIDE_DURATION = 1500;
+const TOTAL_DURATION = 6500;
+const FADE_OUT_DURATION = 500;
 
 interface SplashScreenProps {
   onComplete: () => void;
