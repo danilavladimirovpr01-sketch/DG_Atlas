@@ -43,7 +43,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     if (!ready) return;
 
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % PHOTOS.length);
+      setActiveIndex((prev) => {
+        if (prev >= PHOTOS.length - 1) return prev; // stop on last photo
+        return prev + 1;
+      });
     }, SLIDE_DURATION);
 
     const fadeTimer = setTimeout(() => setFadeOut(true), TOTAL_DURATION);
