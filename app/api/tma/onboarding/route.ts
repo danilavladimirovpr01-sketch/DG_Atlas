@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
         phone: normalizedPhone,
-        telegram_id: telegramId,
+        telegram_id: telegramId != null ? String(telegramId) : undefined,
         first_name: firstName,
         last_name: lastName,
       }),
