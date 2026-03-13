@@ -1,5 +1,5 @@
-import FeatureStub from '@/components/tma/FeatureStub';
+import ProjectStats from '@/components/tma/ProjectStats';
 
 export default function StatsPage() {
-  return <FeatureStub featureId="stats" />;
+  return <ProjectStats />;
 }
