@@ -6,7 +6,7 @@ import { STAGES } from '@/lib/constants/stages';
 import {
   Bell, Star, ArrowRight, ChevronRight,
   User, CheckCircle2, FolderOpen, FileText,
-  ClipboardList, MessageCircle, HelpCircle, Handshake,
+  ClipboardList, CheckSquare, MessageCircle, HelpCircle, Handshake,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -17,6 +17,7 @@ const MENU_ITEMS: { title: string; subtitle: string; icon: LucideIcon; route: st
   { title: 'Мой Проект', subtitle: 'Информация о строительстве', icon: FolderOpen, route: '/tma/project', color: '#FF9800' },
   { title: 'Документы', subtitle: 'Мои документы и материалы чатов', icon: FileText, route: '/tma/documents', color: '#AF52DE' },
   { title: 'Заявки', subtitle: 'Мои заявки', icon: ClipboardList, route: '/tma/requests', color: '#FF3B30' },
+  { title: 'Чек-листы', subtitle: 'Задачи на каждом этапе', icon: CheckSquare, route: '/tma/tasks', color: '#4cd964' },
   { title: 'Чаты', subtitle: 'Мои чаты и каналы', icon: MessageCircle, route: '/tma/chat', color: '#5AC8FA' },
   { title: 'FAQ', subtitle: 'Часто задаваемые вопросы', icon: HelpCircle, route: '/tma/faq', color: '#FF9800' },
   { title: 'Полезные партнёры', subtitle: 'Рекомендации', icon: Handshake, route: '/tma/partners', color: '#4cd964' },
