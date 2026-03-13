@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Inter } from 'next/font/google';
 import type { Project, Profile } from '@/types';
 import { TmaContext, type TmaContextType } from '@/lib/tma-context';
+import BottomNav from '@/components/tma/BottomNav';
 
 const inter = Inter({
   subsets: ['cyrillic', 'latin'],
@@ -78,7 +79,10 @@ export default function TmaLayout({ children }: { children: React.ReactNode }) {
            style={{
              fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
            }}>
-        {children}
+        <div className="pb-16">
+          {children}
+        </div>
+        <BottomNav />
       </div>
     </TmaContext.Provider>
   );
