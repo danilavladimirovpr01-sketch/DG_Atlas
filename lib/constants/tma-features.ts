@@ -128,7 +128,7 @@ const ALL_FEATURES: TmaFeature[] = [
     icon: FileText,
     route: '/tma/documents',
     category: 'media',
-    ready: false,
+    ready: true,
   },
   {
     id: 'quality',
