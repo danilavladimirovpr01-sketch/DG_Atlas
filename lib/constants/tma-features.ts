@@ -110,7 +110,7 @@ const ALL_FEATURES: TmaFeature[] = [
     icon: Image,
     route: '/tma/photos',
     category: 'media',
-    ready: false,
+    ready: true,
   },
   {
     id: 'timelapse',

@@ -19,16 +19,17 @@ const MENU_ITEMS: { title: string; subtitle: string; icon: LucideIcon; route: st
   { title: 'Мой Проект', subtitle: 'Информация о строительстве', icon: FolderOpen, route: '/tma/project', color: '#FF9800' },
   { title: 'Документы', subtitle: 'Мои документы и материалы чатов', icon: FileText, route: '/tma/documents', color: '#AF52DE' },
   { title: 'Заявки', subtitle: 'Мои заявки', icon: ClipboardList, route: '/tma/requests', color: '#FF3B30' },
+  { title: 'Фото стройки', subtitle: 'Фото от прораба каждый день', icon: Image, route: '/tma/photos', color: '#5AC8FA' },
   { title: 'Чаты', subtitle: 'Мои чаты и каналы', icon: MessageCircle, route: '/tma/chat', color: '#5AC8FA' },
   { title: 'FAQ', subtitle: 'Часто задаваемые вопросы', icon: HelpCircle, route: '/tma/faq', color: '#FF9800' },
   { title: 'Полезные партнёры', subtitle: 'Рекомендации', icon: Handshake, route: '/tma/partners', color: '#4cd964' },
 ];
 
 /* ── Quick stats ── */
-const QUICK_STATS: { label: string; icon: LucideIcon; color: string; borderColor: string; key: string }[] = [
+const QUICK_STATS: { label: string; icon: LucideIcon; color: string; borderColor: string; key: string; route?: string }[] = [
   { label: 'Уровень', icon: LayoutGrid, color: '#5AC8FA', borderColor: '#5AC8FA', key: 'level' },
   { label: 'Прогресс', icon: TrendingUp, color: '#4cd964', borderColor: '#4cd964', key: 'progress' },
-  { label: 'Фото', icon: Image, color: '#5AC8FA', borderColor: '#5AC8FA', key: 'photos' },
+  { label: 'Фото', icon: Image, color: '#5AC8FA', borderColor: '#5AC8FA', key: 'photos', route: '/tma/photos' },
   { label: 'Награды', icon: Award, color: '#FF9800', borderColor: '#FF9800', key: 'rewards' },
 ];
 
@@ -124,15 +125,23 @@ export default function WelcomeScreen() {
         {QUICK_STATS.map((stat) => {
           const Icon = stat.icon;
           const value = stat.key === 'progress' ? `${overallProgress}%` : '--';
-          return (
-            <div
-              key={stat.key}
-              className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-[#1a1a1a] border border-white/[0.08]"
-              style={{ boxShadow: `0 0 0 1px ${stat.borderColor}20` }}
-            >
+          const content = (
+            <>
               <Icon className="w-5 h-5" style={{ color: stat.color }} />
               <span className="text-white text-xs font-semibold">{value}</span>
               <span className="text-[#666] text-[10px]">{stat.label}</span>
+            </>
+          );
+          const cls = "flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-[#1a1a1a] border border-white/[0.08]";
+          const style = { boxShadow: `0 0 0 1px ${stat.borderColor}20` };
+
+          return stat.route ? (
+            <Link key={stat.key} href={stat.route} className={cls} style={style}>
+              {content}
+            </Link>
+          ) : (
+            <div key={stat.key} className={cls} style={style}>
+              {content}
             </div>
           );
         })}
