@@ -170,7 +170,7 @@ export function getChecklistByStage(stageNumber: number): StageChecklist | undef
 }
 
 /** Get summary stats across all stages */
-export function getChecklistStats(currentStage: number) {
+export function getChecklistStats() {
   const all = STAGE_CHECKLISTS.flatMap((c) => c.items);
   const done = all.filter((i) => i.status === 'done').length;
   const active = all.filter((i) => i.status === 'active').length;

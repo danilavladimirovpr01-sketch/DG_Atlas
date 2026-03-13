@@ -22,8 +22,8 @@ import {
 } from '@/lib/constants/checklist-items';
 
 /* ─── Summary card ─── */
-function SummaryCard({ currentStage }: { currentStage: number }) {
-  const stats = getChecklistStats(currentStage);
+function SummaryCard() {
+  const stats = getChecklistStats();
   const pct = Math.round((stats.done / stats.total) * 100);
 
   return (
@@ -355,7 +355,7 @@ export default function StageChecklist() {
       </div>
 
       {/* Summary */}
-      <SummaryCard currentStage={currentStage} />
+      <SummaryCard />
 
       {/* Filters */}
       <div className="mt-5 mb-5">
